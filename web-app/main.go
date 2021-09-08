@@ -49,7 +49,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("add", handleAdd)
+	http.HandleFunc("/add", handleAdd)
 	http.Handle("/", http.FileServer(http.Dir("static")))
 
 	if hasKey("localhost.pem", "localhost-key.pem") {

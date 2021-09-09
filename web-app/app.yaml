@@ -1,0 +1,17 @@
+---
+service: reading-list-redirect
+runtime: go116
+env_variables:
+  READING_LIST_SERVER: "https://cceckman.com/writing/reading-list"
+handlers:
+  # Method handlers: direct to script
+  - url: /add
+    script: auto
+    secure: always
+  - url: /.+
+    static_dir: static
+    secure: always
+  - url: /$
+    static_files: static/index.html
+    secure: always
+    upload: static

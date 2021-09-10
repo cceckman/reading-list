@@ -3,13 +3,13 @@ package server
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"path"
 
 	"github.com/cceckman/reading-list/entry"
+	"github.com/spf13/afero"
 )
 
 const (
@@ -23,7 +23,7 @@ type Server struct {
 	entry.EntryManager
 }
 
-func New(dir fs.FS) Server {
+func New(dir afero.Fs) Server {
 	return Server{
 		EntryManager: entry.NewManager(dir),
 	}

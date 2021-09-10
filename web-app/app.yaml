@@ -2,7 +2,7 @@
 service: reading-list-redirect
 runtime: go116
 env_variables:
-  READING_LIST_SERVER: "https://cceckman.com/writing/reading-list"
+  READING_LIST_SERVER: "localhost:8080"
 handlers:
   # Method handlers: direct to script
   - url: /add

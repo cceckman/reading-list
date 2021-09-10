@@ -2,7 +2,9 @@
 service: reading-list-redirect
 runtime: go116
 env_variables:
-  READING_LIST_SERVER: "localhost:8080"
+  UNUSED: unused
+  # Modify to override the default and point to a real server.
+  # READING_LIST_SERVER: "http://localhost:8080/entries"
 handlers:
   # Method handlers: direct to script
   - url: /add

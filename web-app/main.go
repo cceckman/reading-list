@@ -27,7 +27,7 @@ func hasKey(public, private string) bool {
 func getTarget() (*url.URL, error) {
 	t := os.Getenv(SERVER_ENV)
 	if t == "" {
-		t = "https://cceckman.com"
+		t = "http://localhost:8080/entries"
 	}
 	return url.Parse(t)
 }

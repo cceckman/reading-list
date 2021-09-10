@@ -1,12 +1,16 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 )
+
+var port = flag.Int("port", 8080, "Port for the HTTP server to listen on")
 
 const SERVER_ENV = "READING_LIST_SERVER"
 
@@ -45,6 +49,8 @@ func handleAdd(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	flag.Parse()
+
 	if _, err := getTarget(); err != nil {
 		log.Fatal(err)
 	}
@@ -52,11 +58,13 @@ func main() {
 	http.HandleFunc("/add", handleAdd)
 	http.Handle("/", http.FileServer(http.Dir("static")))
 
+	listen := fmt.Sprintf(":%d", *port)
+
 	if hasKey("localhost.pem", "localhost-key.pem") {
 		log.Print("Listening for HTTPS connection...")
-		log.Fatal(http.ListenAndServeTLS(":8080", "localhost.pem", "localhost-key.pem", nil))
+		log.Fatal(http.ListenAndServeTLS(listen, "localhost.pem", "localhost-key.pem", nil))
 	} else {
 		log.Print("Listening for HTTPS connection...")
-		log.Fatal(http.ListenAndServe(":8080", nil))
+		log.Fatal(http.ListenAndServe(listen, nil))
 	}
 }

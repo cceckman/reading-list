@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -9,18 +10,19 @@ import (
 	"github.com/spf13/afero"
 )
 
-// TODO: Temporary storage location, in the current directory.
-const storage = "test-storage"
-const listen = "[::1]:8080"
+var (
+	storage = flag.String("storage", "/var/spool/reading-list", "path to store pending items")
+	listen  = flag.String("listen", "Port or address:port to listen on", "[::]:8080")
+)
 
 func main() {
-	if err := os.MkdirAll(storage, 0755); err != nil {
+	if err := os.MkdirAll(*storage, 0755); err != nil {
 		panic(err)
 	}
 
-	dfs := afero.NewBasePathFs(afero.NewOsFs(), storage)
+	dfs := afero.NewBasePathFs(afero.NewOsFs(), *storage)
 	srv := server.New(dfs)
 
-	log.Printf("Listening on %s", listen)
-	http.ListenAndServe(listen, &srv)
+	log.Printf("Listening on %s", *listen)
+	http.ListenAndServe(*listen, &srv)
 }

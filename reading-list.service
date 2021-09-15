@@ -1,0 +1,24 @@
+[Unit]
+Description=Reading List server
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/reading-list -storage ${STATE_DIRECTORY}
+
+# TODO: Additional sandboxing options.
+
+DynamicUser=yes
+# Below are automatically set by DynamicUser=yes;
+# but we list them explicitly as well.
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+
+# Provide a persistent directory, even with DynamicUser on.
+# The path is /var/cache/<StateDirectory>.
+StateDirectory=reading-list
+
+
+[Install]
+WantedBy=multi-user.target

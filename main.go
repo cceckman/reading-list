@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	storage = flag.String("storage", "/var/spool/reading-list", "path to store pending items")
+	storage = flag.String("storage", "/var/cache/reading-list", "path to store pending items")
 	listen  = flag.String("listen", "Port or address:port to listen on", "[::]:8080")
 )
 

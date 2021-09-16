@@ -5,7 +5,7 @@ name: Create Debian packages
   release:
     types: [created, edited]
 jobs:
-  "Build packages":
+  build-packages:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -1,2 +1,2 @@
 
-rm -f reading-list.*
+rm -f *.bin

@@ -1,3 +1,3 @@
 redo-ifchange \
-  reading-list.amd64.deb \
-  reading-list.arm64.deb
+  amd64.deb \
+  arm64.deb

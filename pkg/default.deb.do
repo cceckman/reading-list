@@ -1,25 +1,31 @@
 
 # redo file to generate a Debian package.
 # Format:
-#   ${PACKAGE}.${ARCH}.deb
+#   ${ARCH}.deb
 # Inputs:
-# ../bin/${PACKAGE}.$ARCH
+# ../bin/${ARCH}.bin
 # ../${PACKAGE}.service
 # ../${PACKAGE}.debcontrol
 # ../version.txt
 set -eu
 exec >&2
 
-ARCH="$(echo "$2" | cut -d. -f2)"
-PACKAGE="$(echo "$2" | cut -d. -f1)"
+ARCH="$2"
+PACKAGE="$(find .. -name '*.service' | xargs basename -s.service)"
 
-if test -z "$ARCH" || test -z "$PACKAGE"
+if test -z "$ARCH"
 then
-  echo >&2 "Expected target like <pkg>.<architecture>.deb"
+  echo >&2 "Expected target like <architecture>.deb"
   exit 1
 fi
 
-BIN="$(readlink -f ..)/bin/${PACKAGE}.${ARCH}"
+if test -z "$PACKAGE"
+then
+  echo >&2 "Expected service file ../<package>.service"
+  exit 1
+fi
+
+BIN="$(readlink -f ..)/bin/${ARCH}.bin"
 SERVICE="$(readlink -f ..)/${PACKAGE}.service"
 CONTROL="$(readlink -f ..)/${PACKAGE}.debcontrol"
 STAMP="$(readlink -f ..)/version.txt"

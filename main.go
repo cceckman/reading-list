@@ -11,11 +11,13 @@ import (
 )
 
 var (
-	storage = flag.String("storage", "/var/cache/reading-list", "path to store pending items")
-	listen  = flag.String("listen", "Port or address:port to listen on", "[::]:8080")
+	storage = flag.String("storage", "/var/lib/reading-list", "path to store pending items")
+	listen  = flag.String("listen", "[::]:8080", "Port or address:port to listen on")
 )
 
 func main() {
+	flag.Parse()
+
 	if err := os.MkdirAll(*storage, 0755); err != nil {
 		panic(err)
 	}

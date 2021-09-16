@@ -1,2 +1,4 @@
 *.pem
 test-storage/
+version.txt
+**/.redo/

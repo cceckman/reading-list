@@ -1,0 +1,7 @@
+Package: reading-list
+Homepage: https://github.com/cceckman/reading-list
+Section: unknown
+Priority: optional
+Maintainer: Charles Eckman <charles@cceckman.com>
+Description:
+  A server that manages a to-read list.

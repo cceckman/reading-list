@@ -1,10 +1,11 @@
 ---
 name: Create Debian packages
 "on":
+  workflow_dispatch: {}
   release:
     types: [created, edited]
 jobs:
-  package:
+  "Build packages":
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

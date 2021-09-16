@@ -1,19 +1,40 @@
 <html>
+
 <head>
   <title>Reading List Admin</title>
   <link rel="manifest" href="manifest.json">
   <script src="app.js" async></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    .invisible {
+      visibility: hidden;
+    }
+  </style>
 </head>
+
 <body>
-  <p>Press "install" to allow sharing to the reading-list.</p>
-  <form method="post" action="add" enctype="multipart/form-data">
-    <label for="title">Title: </label>
-    <input name="title" type="text" id="title"/></label>
 
-    <label for="share-url">Share URL: </label>
-    <input name= "url" type="url" id="share-url"/>
-    <button>Share</button>
-  </form>
+  <p id="install-message">Press "install" to allow sharing to the reading-list.</p>
+  <p id="loading-message">Starting application...</p>
+  <div id="app-content" class="invisible">
+    <form name="add" method="post" action="/entries" enctype="multipart/form-data" id="add-form">
+      <label for="title">Title: </label>
+      <input name="title" type="text" id="title" />
+
+      <label for="share-url">Share URL: </label>
+      <input name="url" type="url" id="share-url" />
+      <button>Share</button>
+    </form>
+    <p id="submit-progress" class="invisible">No submit in progress</p>
+
+    <form id="server-control">
+      <label for="server">Server: </label>
+      <input name="server" type="text" id="server" />
+      <button>Set Server</button>
+    </form>
+
+    <p>Current server: <span id="current-server">(unknown)</span></p>
+  </div>
 </body>
-</html>
 
+</html>

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/cceckman/reading-list/server"
 	"github.com/spf13/afero"
@@ -13,6 +14,7 @@ import (
 var (
 	storage = flag.String("storage", "/var/lib/reading-list", "path to store pending items")
 	listen  = flag.String("listen", "[::]:8080", "Port or address:port to listen on")
+	origins = flag.String("allowed-origins", "*", "Comma-separated list of origins to allow requests from")
 )
 
 func main() {
@@ -23,7 +25,7 @@ func main() {
 	}
 
 	dfs := afero.NewBasePathFs(afero.NewOsFs(), *storage)
-	srv := server.New(dfs)
+	srv := server.New(dfs, strings.Split(*origins, ","))
 
 	log.Printf("Listening on %s", *listen)
 	http.ListenAndServe(*listen, &srv)

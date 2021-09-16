@@ -13,19 +13,25 @@ import (
 )
 
 const (
-	textFormKey  = "text"
-	titleFormKey = "title"
-	urlFormKey   = "url"
+	textFormKey     = "text"
+	titleFormKey    = "title"
+	urlFormKey      = "url"
+	corsAllowOrigin = "Access-Control-Allow-Origin"
 )
 
 // Server allows managing reading-list entries in local storage via a CRUD layer.
 type Server struct {
 	entry.EntryManager
+	Origins []string
 }
 
-func New(dir afero.Fs) Server {
+// Create a new server that:
+// - Serves from / to the provided directory
+// - Allows the provided HTTP(s) origins to access it
+func New(dir afero.Fs, origins []string) Server {
 	return Server{
 		EntryManager: entry.NewManager(dir),
+		Origins:      origins,
 	}
 }
 
@@ -43,6 +49,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // TODO: PUT /entry/<key> to send the update
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) error {
 	log.Printf("request for %s", r.URL)
+	for _, origin := range s.Origins {
+		w.Header().Add(corsAllowOrigin, origin)
+	}
+
 	if r.URL.Path == "/entries" {
 		return s.serveAdd(w, r)
 	}
@@ -81,7 +91,11 @@ func (s *Server) serveAdd(w http.ResponseWriter, r *http.Request) error {
 	url := r.FormValue(urlFormKey)
 	key, err := s.EntryManager.Create(title, url)
 	if err != nil {
+		err := fmt.Errorf("could not create entry: %w", err)
+		log.Print(err)
 		return err
+	} else {
+		log.Printf("created entry %s", key)
 	}
 
 	w.Header().Add("Location", path.Join("/entries", key))

@@ -2,6 +2,7 @@
   "extends": "@tsconfig/recommended/tsconfig.json",
   "include": ["*.ts"],
   "compilerOptions": {
+    "target": "es6",
     "outDir": "js/"
   }
 }

@@ -1,0 +1,17 @@
+{
+  "name": "reading-list",
+  "version": "0.0.1",
+  "description": "Reading list web-app components",
+  "main": "index.js",
+  "author": "Charles Eckman",
+  "license": "MIT",
+  "scripts": {
+    "tsc": "tsc",
+    "esbuild": "esbuild"
+  },
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.1",
+    "esbuild": "^0.14.7",
+    "typescript": "^4.5.4"
+  }
+}

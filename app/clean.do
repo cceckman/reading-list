@@ -4,6 +4,6 @@ rm -rf \
   node_modules/ \
   *.dir \
   js/ \
-  bundle.js \
-  bundle.min.js
+  app.js \
+  app.min.js
 

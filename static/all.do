@@ -1,3 +1,3 @@
-redo-ifchange ../app/index.js ../app/worker.js
+redo-ifchange ../app/app.js ../app/worker.js
 
-cp ../app/index.js ../app/worker.js .
+cp ../app/app.js ../app/worker.js .

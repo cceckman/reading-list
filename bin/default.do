@@ -2,6 +2,9 @@
 # redo file to build a Go binary for a requested architecture.
 set -eu
 
+# We need embedded content to be prepared.
+redo-ifchange ../static/all
+
 # Get the architecture from the requested target.
 GOARCH="$(echo "$1" | cut -d'.' -f2)"
 

@@ -7,11 +7,13 @@
   "license": "MIT",
   "scripts": {
     "tsc": "tsc",
-    "esbuild": "esbuild"
+    "esbuild": "esbuild",
+    "nodemon": "nodemon -e js,ts,do --exec 'redo ../all'"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",
     "esbuild": "^0.14.7",
+    "nodemon": "^2.0.15",
     "typescript": "^4.5.4"
   }
 }

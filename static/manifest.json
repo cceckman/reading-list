@@ -24,5 +24,12 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "id": "cceckman.com/readinglist",
+      "url": "https://matildaii-vm.monkey-heptatonic.ts.net:8080/manifest.json"
+    }
+  ]
 }

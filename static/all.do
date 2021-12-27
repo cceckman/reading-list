@@ -1,3 +1,12 @@
-redo-ifchange ../app/app.js ../app/worker.js
+redo-ifchange \
+  ../app/app.js \
+  ../app/worker.js \
+  ../app/app.js.map
 
-cp ../app/app.js ../app/worker.js .
+cp ../app/*.js .
+cp ../app/*.js.map .
+
+sha256sum \
+  *.js \
+  *.js.map \
+| redo-stamp

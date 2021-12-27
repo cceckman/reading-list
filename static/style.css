@@ -1,0 +1,28 @@
+html, body {
+  margin: 0px;
+}
+
+.main {
+  height: 100%;
+}
+
+.statusBar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  padding-left: 1em;
+  padding-right: 1em;
+  font-size: smaller;
+}
+.statusBar.workingState {
+  background-color: lightgoldenrodyellow;
+  color: black;
+}
+.statusBar.errorState {
+  background-color: crimson;
+  color: white;
+}
+.statusBar.okState {
+  background-color: greenyellow;
+  color: black;
+}

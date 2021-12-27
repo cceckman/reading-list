@@ -1,8 +1,34 @@
 
+export function workingStatus(message: String | HTMLElement): Status {
+  return {
+    state: State.WORKING,
+    message,
+  }
+}
+
+export function errorStatus(message: String | HTMLElement): Status {
+  return {
+    state: State.ERROR,
+    message,
+  }
+}
+
+export function okStatus(message: String | HTMLElement): Status {
+  return {
+    state: State.OK,
+    message,
+  }
+}
+
+export interface Status {
+  state: State,
+  message: String | HTMLElement,
+}
+
 export enum State {
-  WORKING = "…",
-  ERROR = "!",
-  OK = "✓",
+  WORKING,
+  ERROR,
+  OK,
 }
 
 function classOf(s: State) {
@@ -13,32 +39,42 @@ function classOf(s: State) {
   };
 }
 
+function stringOf(s: State) {
+  switch(s) {
+    case State.WORKING: return "…";
+    case State.ERROR: return "!";
+    case State.OK: return "✓";
+  }
+}
 
 // Status view.
-export class Status {
+export class StatusBar {
   constructor(container: HTMLElement) {
     this.container = container;
 
-    this.text = document.createTextNode('');
     this.p = document.createElement('p') as HTMLParagraphElement;
-    this.p.replaceChildren(this.text);
     this.state = State.WORKING;
-    this.update(State.WORKING, "Loading");
+    this.update(workingStatus("Loading"));
 
     this.container.replaceChildren(this.p);
   }
 
-  update(state: State, message: String) {
-    const msg = `${state} ${message}`;
-    console.log("Status update: ", msg);
-    this.text.data = msg;
-    this.container.classList.replace(classOf(this.state), classOf(state));
+  update({state, message}: Status) {
+    if(message instanceof HTMLElement) {
+      const text = document.createTextNode(`${stringOf(state)} `);
+      this.p.replaceChildren(text, message);
+    } else {
+      const text = document.createTextNode(`${stringOf(state)} ${message}`);
+      this.p.replaceChildren(text);
+    }
+
+    this.container.classList.remove(classOf(this.state))
+    this.container.classList.add(classOf(state));
     this.state = state;
   }
 
   private state: State;
   private p: HTMLParagraphElement;
-  private text: Text;
   private container: HTMLElement;
 
 }

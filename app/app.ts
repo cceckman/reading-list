@@ -5,12 +5,6 @@ interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<boolean>,
 }
 
-// Extensions to the navigator:
-// https://wicg.github.io/get-installed-related-apps/spec/
-interface ExtendedNavigator extends Navigator {
-  getInstalledRelatedApps: () => Promise<Array<{ id: String }>>;
-}
-
 class App {
   constructor() {
     this.root = document.getElementById("app") as HTMLElement;
@@ -20,12 +14,9 @@ class App {
       this.appStatus = new StatusBar(statusContainer);
       this.root.replaceChildren(statusContainer);
     }
-
-    this.appInstalled = workingStatus("Checking app installation");
+    this.appInstalled = okStatus("App installed");
     this.workerInstalled = workingStatus("Checking worker installation");
-
     this.updateAppStatus();
-
     this.setupInstallableFlow();
     this.setupServiceWorker();
   }
@@ -40,59 +31,55 @@ class App {
   }
 
   private setupInstallableFlow() {
-    const installSuccess = () => {
-      const appInstalledStatus = okStatus("App installed");
-      console.log("App appears installed");
-      this.appInstalled = appInstalledStatus;
-      this.appInstallPrompt = undefined;
-      this.updateAppStatus();
-    };
-
-    // If we're already standalone, assume we've been installed.
-    // This isn't actually correct, of course.
-    if(window.matchMedia('(display-mode: standalone)').matches){
-      console.log("Assuming standalone window indicates installation");
-      installSuccess();
-      return;
-    }
-
-    const installPrompt = (evt?: BeforeInstallPromptEvent) => {
-        // Not already installed; capture the prompt.
-        // TODO: make the message a node, to properly prompt
-        this.appInstalled = workingStatus("Click to install app");
-        this.appInstallPrompt = evt;
-        this.updateAppStatus();
-    };
-
     // Set up event listeners
     // From https://web.dev/customize-install/:
-    // Get a handle if it needs to be installed.
+
+    // Listen for prompt installation; display an "install me" prompt.
     window.addEventListener('beforeinstallprompt', (e: Event) => {
       console.log("Running install prompt hook");
       e.preventDefault();
-      if (this.appInstalled.state != State.OK) {
-        installPrompt(e as BeforeInstallPromptEvent);
-      }
-    });
-    // Get notified if it's been installed; set status to OK.
-    window.addEventListener('appinstalled', (e: Event) => {
-      console.log("Running app install hook", e);
-      installSuccess();
+      const evt = e as BeforeInstallPromptEvent;
+
+      const install = (() => {
+        const install = document.createElement("button") as HTMLButtonElement;
+        install.type = "button";
+        install.appendChild(document.createTextNode("Install"));
+        install.onclick = () => {
+          evt.prompt().then((wasInstalled) => {
+            if(!wasInstalled) {
+              this.appInstalled = errorStatus("Install declined; share-to-list not available");
+              this.updateAppStatus();
+            }
+          });
+        };
+        return install;
+      })();
+      const cancel = (() => {
+        const b = document.createElement("button") as HTMLButtonElement;
+        b.type = "button";
+        b.appendChild(document.createTextNode("Ignore"));
+        b.onclick = () => {
+          this.appInstalled = okStatus("App installation declined");
+          this.updateAppStatus();
+        };
+        return b;
+      })();
+
+      const container = document.createElement("span") as HTMLSpanElement;
+      container.replaceChildren(
+        "Install to share to reading list: ",
+        install, cancel,
+      );
+      this.appInstalled = workingStatus(container);
+      this.updateAppStatus();
     });
 
-    // If we can check-for-installation, go ahead and do so-
-    // and short-circuit events if we find ourself.
-    if ('getInstalledRelatedApps' in window.navigator) {
-      const nav = navigator as ExtendedNavigator;
-      nav.getInstalledRelatedApps().then((apps) => {
-        console.log("Installed apps: ", apps);
-        if (apps.length != 0) {
-          installSuccess();
-        }
-      });
-    } else {
-      console.log("getInstalledRelatedApps not available");
-    }
+    // Get notified if it's been installed; set status to OK.
+    window.addEventListener('appinstalled', (e: Event) => {
+      console.log("Running install-completed hook", e);
+      this.appInstalled = okStatus("App installed");
+      this.updateAppStatus();
+    });
   }
 
   private setupServiceWorker() {
@@ -113,10 +100,14 @@ class App {
     }
   }
 
-  // Has the app been installed, i.e. as a share target?
+  // Does the app need installation?
   private appInstalled: Status;
-  private appInstallPrompt?: BeforeInstallPromptEvent;
+  // Was there a problem starting the service worker?
   private workerInstalled: Status;
+
+  // TODO:
+  // private listView: ListView;
+  // private editView: EditView;
 
   private root: HTMLElement;
   private appStatus: StatusBar;

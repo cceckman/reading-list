@@ -5,5 +5,6 @@ rm -rf \
   *.dir \
   js/ \
   app.js \
-  app.min.js
+  app.min.js \
+  *.map
 

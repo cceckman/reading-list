@@ -47,6 +47,8 @@ function stringOf(s: State) {
   }
 }
 
+type TimeoutId = number;
+
 // Status view.
 export class StatusBar {
   constructor(container: HTMLElement) {
@@ -60,6 +62,7 @@ export class StatusBar {
   }
 
   update({state, message}: Status) {
+    this.container.classList.remove("invisible");
     if(message instanceof HTMLElement) {
       const text = document.createTextNode(`${stringOf(state)} `);
       this.p.replaceChildren(text, message);
@@ -71,10 +74,29 @@ export class StatusBar {
     this.container.classList.remove(classOf(this.state))
     this.container.classList.add(classOf(state));
     this.state = state;
+
+    // If OK, disappear after a timeout
+    if(this.state === State.OK) {
+      // If we were already OK, make sure this message still appears for a while;
+      // don't hide too early.
+      if(this.hider !== undefined) {
+        clearTimeout(this.hider);
+        this.hider = undefined;
+      }
+      this.hider = setTimeout(() => { this.hide() }, 3000);
+    }
+  }
+
+  private hide() {
+    if(this.state == State.OK) {
+      this.container.classList.add("invisible");
+      this.hider = undefined;
+    }
   }
 
   private state: State;
   private p: HTMLParagraphElement;
   private container: HTMLElement;
+  private hider? : TimeoutId;
 
 }

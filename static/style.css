@@ -26,3 +26,7 @@ html, body {
   background-color: greenyellow;
   color: black;
 }
+
+.invisible {
+  visibility: hidden;
+}

@@ -7,6 +7,32 @@
 </head>
 <body>
   <div id="app"><p>Loading reading list admin...</p></div>
+  <template id="listView">
+    <div class="menu">
+      <button class="menuButton" id="add" name="Add">+</button>
+      <button class="menuButton" id="refresh" name="Refresh">&#128472;</button>
+    </div>
+    <div id="listItems"></div>
+  </template>
+  <template id="listItem">
+    <link rel="stylesheet" href="style.css">
+    <div class="listItem">
+      <table class="visibilityInfo">
+        <tr><td>&#x2757;</td><td><slot name="discoveredDate">????-??-??</slot></td></tr>
+        <tr><td>&#128366;</td><td><slot name="readDate">&mdash;</slot></td></tr>
+        <tr><td>&#128393;</td><td><slot name="revieweddate">&mdash;</slot></td></tr>
+      </table>
+      <div class="itemInfo">
+        <h2><slot name="title">[Item Title]</slot></h2>
+        <h3><slot name="source">[Item Source]</slot></h3>
+        <!-- TODO: Other metadata -->
+      </div>
+      <form method="get">
+        <slot name="originalId"></slot>
+        <button class="editButton" name="Edit">&#128393;</button>
+      </form>
+    </div>
+  </template>
 </body>
 </html>
 

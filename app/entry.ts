@@ -1,31 +1,19 @@
 
 
 // "Source" type: Where did something come from?
-class WebSource {
-  constructor(text: String, url?: URL) {
-    this.text = text;
-    this.url = url;
-  }
-
-  text: String;
+export interface WebSource {
+  text: string;
   url?: URL;
 }
 
 // Generalized source: may also include ISBN, DOI, etc.
-type Source = WebSource;
+export type Source = WebSource;
 
-class Entry {
-  constructor(id: String, title: String, source: Source) {
-    this.id = id;
-    this.title = title;
-    this.source = source;
-    this.added = new Date();
-  }
-
+export interface Entry {
   // Unique identifier for this entry.
-  id: String;
+  id: string;
   // Renderable text: What do we call it?
-  title: String;
+  title: string;
   // How can it be found?
   source: Source;
   // When was this entry added to the list?

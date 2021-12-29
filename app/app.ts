@@ -1,4 +1,5 @@
 import { State, Status, StatusBar, workingStatus, errorStatus, okStatus } from './status';
+import { ListView } from './list_view';
 
 // Event from the 'beforeinstallprompt' event
 interface BeforeInstallPromptEvent extends Event {
@@ -8,12 +9,16 @@ interface BeforeInstallPromptEvent extends Event {
 class App {
   constructor() {
     this.root = document.getElementById("app") as HTMLElement;
-    {
-      const statusContainer = document.createElement("div") as HTMLDivElement;
-      statusContainer.classList.add("statusBar");
-      this.appStatus = new StatusBar(statusContainer);
-      this.root.replaceChildren(statusContainer);
-    }
+    
+    const statusContainer = document.createElement("div") as HTMLDivElement;
+    statusContainer.classList.add("statusBar");
+    
+    this.appStatus = new StatusBar(statusContainer);
+    this.listView = new ListView("#listView");
+
+    // TODO: Swap in listView vs. edit view based on URL
+    this.root.replaceChildren(this.listView.root, statusContainer);
+
     this.appInstalled = okStatus("App installed");
     this.workerInstalled = workingStatus("Checking worker installation");
     this.updateAppStatus();
@@ -46,7 +51,7 @@ class App {
         install.appendChild(document.createTextNode("Install"));
         install.onclick = () => {
           evt.prompt().then((wasInstalled) => {
-            if(!wasInstalled) {
+            if (!wasInstalled) {
               this.appInstalled = errorStatus("Install declined; share-to-list not available");
               this.updateAppStatus();
             }
@@ -106,7 +111,7 @@ class App {
   private workerInstalled: Status;
 
   // TODO:
-  // private listView: ListView;
+  private listView: ListView;
   // private editView: EditView;
 
   private root: HTMLElement;

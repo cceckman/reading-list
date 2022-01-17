@@ -38,7 +38,9 @@ func main() {
 	var ln net.Listener
 	var err error
 	if *useTsNet {
-		s := new(tsnet.Server)
+		s := &tsnet.Server{
+			Hostname: "reading-list",
+		}
 		ln, err = s.Listen("tcp", *addr)
 	} else {
 		ln, err = net.Listen("tcp", *addr)

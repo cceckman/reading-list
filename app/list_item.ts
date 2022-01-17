@@ -1,4 +1,4 @@
-import { Entry } from './entry'
+import { Entry } from './entry';
 
 // A view for an item in the reading list.
 export class ListItem extends HTMLElement {
@@ -97,4 +97,4 @@ export class ListItem extends HTMLElement {
   }
 }
 
-customElements.define('list-item', ListItem)
+customElements.define('list-item', ListItem);

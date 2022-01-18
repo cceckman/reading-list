@@ -8,6 +8,7 @@ import (
 	"embed"
 
 	"github.com/cceckman/reading-list/server/entry"
+	"github.com/cceckman/reading-list/server/paths"
 )
 
 //go:embed *.html body/* menu/*
@@ -15,26 +16,19 @@ var templates embed.FS
 
 var parsedTemplates *template.Template = template.Must(template.ParseFS(templates, "*.html", "*/*.html"))
 
-// URL paths to use when rendering templates.
-// TODO: Use this more broadly.
-type Paths interface {
-	Edit() string
-	Save() string
-}
-
 // Fill for templates.
 type fill struct {
-	Paths
+	paths.Paths
 	CurrentItem *entry.Entry
 	ListItems   []entry.Entry
 }
 
 // Render the "list" page to the provided writer, using the provided entries.
-func List(w io.Writer, paths Paths, entries []entry.Entry) error {
+func List(w io.Writer, paths paths.Paths, entries []entry.Entry) error {
 	return parsedTemplates.ExecuteTemplate(w, "main.html", fill{Paths: paths, ListItems: entries})
 }
 
 // Render the "edit" page for the provided entry.
-func Edit(w io.Writer, paths Paths, entry *entry.Entry) error {
+func Edit(w io.Writer, paths paths.Paths, entry *entry.Entry) error {
 	return parsedTemplates.ExecuteTemplate(w, "main.html", fill{Paths: paths, CurrentItem: entry})
 }

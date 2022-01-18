@@ -20,11 +20,17 @@ var es []entry.Entry = []entry.Entry{
 
 type paths struct{}
 
-func (paths) Edit() string {
+func (paths) Edit(id string) string {
 	return "/edit"
 }
 func (paths) Save() string {
 	return "/save"
+}
+func (paths) List() string {
+	return "/"
+}
+func (paths) Share() string {
+	return "/share"
 }
 
 func TestRenderList(t *testing.T) {

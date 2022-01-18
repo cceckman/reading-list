@@ -1,5 +1,7 @@
 package entry
 
+/*
+
 import (
 	"bytes"
 	"fmt"
@@ -110,3 +112,4 @@ func (s *EntryManager) Read(key string) (*FrontMatter, error) {
 	entry, _, err := s.read(key)
 	return entry, err
 }
+*/

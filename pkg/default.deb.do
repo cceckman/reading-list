@@ -3,7 +3,7 @@
 # Format:
 #   ${PACKAGE}.${ARCH}.deb
 # Inputs:
-# ../bin/${PACKAGE}.$ARCH
+# ../server/${PACKAGE}.$ARCH
 # ../${PACKAGE}.service
 # ../${PACKAGE}.debcontrol
 # ../version.txt
@@ -19,7 +19,7 @@ then
   exit 1
 fi
 
-BIN="$(readlink -f ..)/bin/${PACKAGE}.${ARCH}"
+BIN="$(readlink -f ..)/server/${PACKAGE}.${ARCH}"
 SERVICE="$(readlink -f ..)/${PACKAGE}.service"
 CONTROL="$(readlink -f ..)/${PACKAGE}.debcontrol"
 STAMP="$(readlink -f ..)/version.txt"

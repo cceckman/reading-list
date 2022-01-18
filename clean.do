@@ -1,3 +1,3 @@
 
-redo bin/clean pkg/clean app/clean static/clean
+redo server/clean pkg/clean app/clean
 rm -rf version.txt

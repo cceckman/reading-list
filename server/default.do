@@ -3,7 +3,7 @@
 set -eu
 
 # We need embedded content to be prepared.
-redo-ifchange ../static/all
+redo static/all
 
 # Get the architecture from the requested target.
 GOARCH="$(echo "$1" | cut -d'.' -f2)"
@@ -15,7 +15,7 @@ then
 fi
 
 OUTPUT="$(readlink -f $3)"
-( cd .. && GOARCH="$GOARCH" go build -o "$OUTPUT" )
+( GOARCH="$GOARCH" go build -o "$OUTPUT" )
 
 # `go` is pretty good at caching and reproducibility.
 # Always rebuild, but use stamping to suppress downstream targets.

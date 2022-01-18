@@ -1,5 +1,6 @@
 package entry_test
 
+/*
 import (
 	"bytes"
 	"errors"
@@ -137,3 +138,4 @@ func TestEntryManagerGetNotFound(t *testing.T) {
 		t.Fatalf("unexpected result from Read; got: %v want: some parse error", err)
 	}
 }
+*/

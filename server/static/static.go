@@ -6,8 +6,9 @@ import (
 	"embed"
 )
 
-// We do *not* include the .js.map file in the embedded contents.
-//go:embed *.html *.js *.png *.json *.css
+// We do *not* include the .js.map file in the embedded contents; we only serve it when serving
+// from the local filesystem.
+//go:embed *.js *.png *.json *.css
 var Files embed.FS
 
 // TODO:

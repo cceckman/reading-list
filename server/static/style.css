@@ -20,6 +20,13 @@ html, body {
   padding: 0.5em;
 }
 
+.main {
+  flex-grow: 1;
+  background-color: lightsteelblue;
+  overflow-y: scroll;
+  width: 100%;
+}
+
 #listItems {
   flex-grow: 1;
   background-color: lightsteelblue;

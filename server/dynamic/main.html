@@ -1,0 +1,30 @@
+<html>
+
+<head>
+  <title>Reading List Admin</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" async></script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="menu">
+      {{ if .CurrentItem -}}
+      {{ template "edit-menu.html" . -}}
+      {{ else }}
+      {{ template "list-menu.html" . -}}
+      {{ end }}
+    </div>
+
+    <div class="main">
+      {{ if .CurrentItem -}}
+      {{ template "edit-body.html" .CurrentItem -}}
+      {{ else -}}
+      {{ template "list-body.html" .ListItems -}}
+      {{ end }}
+    </div>
+  </div>
+</body>
+
+</html>

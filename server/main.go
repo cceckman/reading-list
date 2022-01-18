@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cceckman/reading-list/static"
+	"github.com/cceckman/reading-list/server/static"
 	"tailscale.com/client/tailscale"
 	"tailscale.com/tsnet"
 )

@@ -44,6 +44,9 @@ type Entry struct {
 	// Discovery data: how did I come across this item?
 	// This may be rendered as "found via..."
 	Discovery *Source `yaml:",omitempty"`
+
+	// Original content as read out. This allows the entire entry to be re-serialized.
+	original pageparser.ContentFrontMatter `yaml:"-"`
 }
 
 // Discovery / link metadata.
@@ -116,6 +119,12 @@ func Read(id string, r io.Reader) (*Entry, error) {
 	}
 	e.Id = id
 	e.Title = title
+	e.original = cfm
 
 	return &e, nil
+}
+
+// Marshal the item back to a writer, e.g. a file.
+func (e *Entry) WriteTo(w io.Writer) (int, error) {
+	return 0, fmt.Errorf("unimplemented")
 }

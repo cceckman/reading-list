@@ -2,10 +2,10 @@
 package dynamic
 
 import (
+	"embed"
 	"html/template"
 	"io"
-
-	"embed"
+	"io/fs"
 
 	"github.com/cceckman/reading-list/server/entry"
 	"github.com/cceckman/reading-list/server/paths"
@@ -14,7 +14,27 @@ import (
 //go:embed *.html body/* menu/*
 var templates embed.FS
 
-var parsedTemplates *template.Template = template.Must(template.ParseFS(templates, "*.html", "*/*.html"))
+var embeddedTemplates *template.Template = template.Must(template.ParseFS(templates, "*.html", "*/*.html"))
+
+// Return a renderer that uses templates embedded in the binary.
+func New() Renderer {
+	return embeddedTemplates.Lookup
+}
+
+func NewFromFs(fs fs.FS) Renderer {
+	return func(name string) *template.Template {
+		// Re-load all templates on every lookup.
+		// Yes, this is expensive; but it means we get "live" templates at every refresh.
+		return template.Must(template.ParseFS(templates, "*.html", "*/*.html")).Lookup(name)
+	}
+}
+
+// Renderer renders dynamic content for the site.
+type Renderer getTemplate
+
+// Indirection layer for "get template".
+// This allows rewriting templates at runtime when operating in "local" mode.
+type getTemplate func(name string) *template.Template
 
 // Fill for templates.
 type fill struct {
@@ -24,11 +44,11 @@ type fill struct {
 }
 
 // Render the "list" page to the provided writer, using the provided entries.
-func List(w io.Writer, paths paths.Paths, entries []entry.Entry) error {
-	return parsedTemplates.ExecuteTemplate(w, "main.html", fill{Paths: paths, ListItems: entries})
+func (r Renderer) List(w io.Writer, paths paths.Paths, entries []entry.Entry) error {
+	return r("main.html").Execute(w, fill{Paths: paths, ListItems: entries})
 }
 
 // Render the "edit" page for the provided entry.
-func Edit(w io.Writer, paths paths.Paths, entry *entry.Entry) error {
-	return parsedTemplates.ExecuteTemplate(w, "main.html", fill{Paths: paths, CurrentItem: entry})
+func (r Renderer) Edit(w io.Writer, paths paths.Paths, entry *entry.Entry) error {
+	return r("main.html").Execute(w, fill{Paths: paths, CurrentItem: entry})
 }

@@ -16,6 +16,7 @@ func New(paths paths.Paths) *Server {
 		paths:   paths,
 		static:  http.FileServer(http.FS(static.Files)),
 		dynamic: dynamic.New(),
+		mux:     http.NewServeMux(),
 	}
 	s.setupRouter()
 	return s
@@ -27,6 +28,7 @@ func NewFs(paths paths.Paths, static fs.FS, templates fs.FS) *Server {
 		paths:   paths,
 		static:  http.FileServer(http.FS(static)),
 		dynamic: dynamic.NewFromFs(templates),
+		mux:     http.NewServeMux(),
 	}
 	s.setupRouter()
 	return s

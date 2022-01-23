@@ -3,13 +3,15 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"io/fs"
 	"log"
 	"net"
 	"net/http"
 	"os"
 
-	"github.com/cceckman/reading-list/server/static"
+	"github.com/cceckman/reading-list/server"
+	serverLog "github.com/cceckman/reading-list/server/log"
+	"github.com/cceckman/reading-list/server/paths"
+
 	"tailscale.com/client/tailscale"
 	"tailscale.com/tsnet"
 )
@@ -23,20 +25,21 @@ var (
 func main() {
 	flag.Parse()
 
-	var files fs.FS
+	var s *server.Server
 	if *allowLocal {
 		log.Print("Serving from local directories")
-		// Serve from local filesystem.
-		files = os.DirFS("static")
+		s = server.NewFs(paths.Default, os.DirFS("static"), os.DirFS("dynamic"))
 	} else {
 		log.Print("Serving from embedded files")
-		files = static.Files
+		s = server.New(paths.Default)
 	}
-	// Root handler: serve from the filesystem.
-	fileHandler := http.FileServer(http.FS(files))
+
+	logSettings, err := serverLog.Settings()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var ln net.Listener
-	var err error
 	if *useTsNet {
 		s := &tsnet.Server{
 			Hostname: "reading-list",
@@ -61,8 +64,13 @@ func main() {
 				http.Error(w, err.Error(), 500)
 				return
 			}
-			log.Printf("Tailscale-authenticated request from %s at %s", who.UserProfile.LoginName, who.Node.Name)
+			if logSettings.TailscaleIdentity {
+				log.Printf("Tailscale-authenticated request from %s at %s", who.UserProfile.LoginName, who.Node.Name)
+			}
 		}
-		fileHandler.ServeHTTP(w, r)
+		if logSettings.RequestPath {
+			log.Printf("Processing request for %v", r.URL)
+		}
+		s.ServeHTTP(w, r)
 	})))
 }

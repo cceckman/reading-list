@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/cceckman/reading-list/server"
+	"github.com/cceckman/reading-list/server/entry"
 	serverLog "github.com/cceckman/reading-list/server/log"
 	"github.com/cceckman/reading-list/server/paths"
 
@@ -22,16 +23,24 @@ var (
 	useTsNet   = flag.Bool("tsnet", true, "Connect directly to Tailscale via tsnet")
 )
 
+type fakeEntryManager struct{}
+
+func (*fakeEntryManager) List(limit int) ([]entry.Entry, error) {
+	return nil, nil
+}
+
 func main() {
 	flag.Parse()
+
+	var m fakeEntryManager
 
 	var s *server.Server
 	if *allowLocal {
 		log.Print("Serving from local directories")
-		s = server.NewFs(paths.Default, os.DirFS("static"), os.DirFS("dynamic"))
+		s = server.NewFs(paths.Default, &m, os.DirFS("static"), os.DirFS("dynamic"))
 	} else {
 		log.Print("Serving from embedded files")
-		s = server.New(paths.Default)
+		s = server.New(paths.Default, &m)
 	}
 
 	logSettings, err := serverLog.Settings()

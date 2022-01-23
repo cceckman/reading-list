@@ -1,7 +1,10 @@
 package server
 
 import (
+	"fmt"
 	"io/fs"
+	"log"
+	"math"
 	"net/http"
 
 	"github.com/cceckman/reading-list/server/dynamic"
@@ -10,10 +13,19 @@ import (
 	"github.com/cceckman/reading-list/server/static"
 )
 
-// Return a new server that provides content from embedded data.
-func New(paths paths.Paths) *Server {
+// Interface for managing entries.
+type EntryManager interface {
+	// Create(entry.Entry) error
+	// Read(id string) (entry.Entry, error)
+	// Update(entry.Entry) error
+	List(limit int) ([]entry.Entry, error)
+}
+
+// Return a server for the entry manager, rendering based on embedded templates.
+func New(paths paths.Paths, em EntryManager) *Server {
 	s := &Server{
 		paths:   paths,
+		manager: em,
 		static:  http.FileServer(http.FS(static.Files)),
 		dynamic: dynamic.New(),
 		mux:     http.NewServeMux(),
@@ -22,10 +34,11 @@ func New(paths paths.Paths) *Server {
 	return s
 }
 
-// Return a new server that provides content from the filesystem.
-func NewFs(paths paths.Paths, static fs.FS, templates fs.FS) *Server {
+// Return a server for the entry manager, rendering from templates live on the filesystem.
+func NewFs(paths paths.Paths, em EntryManager, static fs.FS, templates fs.FS) *Server {
 	s := &Server{
 		paths:   paths,
+		manager: em,
 		static:  http.FileServer(http.FS(static)),
 		dynamic: dynamic.NewFromFs(templates),
 		mux:     http.NewServeMux(),
@@ -37,6 +50,7 @@ func NewFs(paths paths.Paths, static fs.FS, templates fs.FS) *Server {
 // Server serves an app managing reading-list entries.
 type Server struct {
 	paths   paths.Paths
+	manager EntryManager
 	static  http.Handler
 	dynamic dynamic.Renderer
 
@@ -53,12 +67,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveList(w http.ResponseWriter, r *http.Request) {
-	s.dynamic.List(w, s.paths, []entry.Entry{})
+	items, err := s.manager.List(math.MaxInt)
+	if err != nil {
+		log.Printf("error in serving list request: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "error in serving list request: %v", err)
+		return
+	}
+	s.dynamic.List(w, s.paths, items)
 }
 
 func (s *Server) serveDefault(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "" || r.URL.Path == "/" {
 		s.serveList(w, r)
+		return
 	}
 	s.static.ServeHTTP(w, r)
 }

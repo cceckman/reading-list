@@ -27,8 +27,9 @@ STAMP="$(readlink -f ..)/version.txt"
 redo-ifchange "$BIN" "$SERVICE" "$STAMP" "$CONTROL" *.template
 
 VERSION="$(cat $STAMP | sed 's/^v//')"
-WORKDIR="$(mktemp -d -p . XXXXXX.tmp)/${PACKAGE}_${VERSION}_${ARCH}"
-echo >&2 "Building package in $WORKDIR"
+WORKTMP="$(mktemp -d -p . XXXXXX.tmp)"
+WORKDIR="$WORKTMP/${PACKAGE}_${VERSION}_${ARCH}"
+echo >&2 "Building $1 in $WORKDIR"
 
 # Generate the tree for dpkg-deb --build.
 mkdir -p "$WORKDIR/DEBIAN"
@@ -55,4 +56,5 @@ dpkg-deb --build "$WORKDIR"
 mv "$WORKDIR".deb "$3"
 
 # On success, clean up:
-rm -rf "$WORKDIR"
+rm -rf "$WORKTMP"
+

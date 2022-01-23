@@ -15,7 +15,9 @@ then
 fi
 
 OUTPUT="$(readlink -f $3)"
-( GOARCH="$GOARCH" go build -o "$OUTPUT" )
+( GOARCH="$GOARCH" go build -o "$OUTPUT" ./bin )
+
+test -x "$OUTPUT"
 
 # `go` is pretty good at caching and reproducibility.
 # Always rebuild, but use stamping to suppress downstream targets.

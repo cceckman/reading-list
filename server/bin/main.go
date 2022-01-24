@@ -23,16 +23,10 @@ var (
 	useTsNet   = flag.Bool("tsnet", true, "Connect directly to Tailscale via tsnet")
 )
 
-type fakeEntryManager struct{}
-
-func (*fakeEntryManager) List(limit int) ([]entry.Entry, error) {
-	return nil, nil
-}
-
 func main() {
 	flag.Parse()
 
-	var m fakeEntryManager
+	var m entry.TestEntryManager
 
 	var s *server.Server
 	if *allowLocal {

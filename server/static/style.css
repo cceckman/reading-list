@@ -55,6 +55,10 @@ html, body {
   margin: inherit;
 }
 
+form.menu {
+  display: inline;
+}
+
 .menuButton {
   /* Aligning buttons properly:
   https://codyhouse.co/blog/post/vertical-text-alignment-in-buttons-and-inputs

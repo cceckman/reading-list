@@ -16,9 +16,9 @@ import (
 // Interface for managing entries.
 type EntryManager interface {
 	// Create(entry.Entry) error
-	// Read(id string) (entry.Entry, error)
+	Read(id string) (*entry.Entry, error)
 	// Update(entry.Entry) error
-	List(limit int) ([]entry.Entry, error)
+	List(limit int) ([]*entry.Entry, error)
 }
 
 // Return a server for the entry manager, rendering based on embedded templates.
@@ -59,10 +59,14 @@ type Server struct {
 
 func (s *Server) setupRouter() {
 	s.mux.Handle(paths.Default.List(), http.HandlerFunc(s.serveList))
+	s.mux.Handle(paths.Default.Edit(), http.HandlerFunc(s.serveEdit))
 	s.mux.Handle("/", http.HandlerFunc(s.serveDefault))
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if f, ok := (w.(http.Flusher)); ok {
+		defer f.Flush()
+	}
 	s.mux.ServeHTTP(w, r)
 }
 
@@ -75,6 +79,24 @@ func (s *Server) serveList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.dynamic.List(w, s.paths, items)
+}
+
+func (s *Server) serveEdit(w http.ResponseWriter, r *http.Request) {
+	// Do we have an ID?
+	id := r.URL.Query().Get("id")
+	var e *entry.Entry
+	var err error
+	if id != "" {
+		e, err = s.manager.Read(id)
+	} else {
+		e = &entry.Entry{}
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	s.dynamic.Edit(w, s.paths, e)
 }
 
 func (s *Server) serveDefault(w http.ResponseWriter, r *http.Request) {

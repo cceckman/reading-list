@@ -40,11 +40,11 @@ type getTemplate func(name string) *template.Template
 type fill struct {
 	paths.Paths
 	CurrentItem *entry.Entry
-	ListItems   []entry.Entry
+	ListItems   []*entry.Entry
 }
 
 // Render the "list" page to the provided writer, using the provided entries.
-func (r Renderer) List(w io.Writer, paths paths.Paths, entries []entry.Entry) error {
+func (r Renderer) List(w io.Writer, paths paths.Paths, entries []*entry.Entry) error {
 	return r("main.html").Execute(w, fill{Paths: paths, ListItems: entries})
 }
 

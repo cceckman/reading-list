@@ -19,7 +19,7 @@
 
     <div class="main">
       {{ if .CurrentItem -}}
-      {{ template "edit-body.html" .CurrentItem -}}
+      {{ template "edit-body.html" . -}}
       {{ else -}}
       {{ template "list-body.html" .ListItems -}}
       {{ end }}

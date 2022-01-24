@@ -9,7 +9,7 @@ import (
 	"github.com/cceckman/reading-list/server/paths"
 )
 
-var es []entry.Entry = []entry.Entry{
+var es []*entry.Entry = []*entry.Entry{
 	{
 		Id:    "first-entry",
 		Title: "Something",
@@ -30,7 +30,7 @@ func TestRenderList(t *testing.T) {
 func TestRenderEdit(t *testing.T) {
 	var b bytes.Buffer
 
-	if err := dynamic.New().Edit(&b, paths.Default, &es[0]); err != nil {
+	if err := dynamic.New().Edit(&b, paths.Default, es[0]); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }

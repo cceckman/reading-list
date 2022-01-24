@@ -1,4 +1,5 @@
 import { State, Status, StatusBar, workingStatus, errorStatus, okStatus } from './status';
+import { AddListItem } from './list_item';
 
 // Event from the 'beforeinstallprompt' event
 interface BeforeInstallPromptEvent extends Event {
@@ -107,3 +108,4 @@ class App {
 }
 
 new App();
+AddListItem();

@@ -1,14 +1,40 @@
 <div id="editArea">
-  <form>
-    <input type="text" id="id" name="id" placeholder="ID" value="{{ .CurrentItem.Id }}" />
-    <input type="text" id="title" name="title" placeholder="Title" value="{{ .CurrentItem.Title }}" />
-    <input type="text" id="source" name="source" placeholder="Source" value="{{ .CurrentItem.Source.Text }}" />
-    <input type="url" id="source-url" name="source-url" placeholder="URL" value="{{ .CurrentItem.Source.UrlString}}" />
+  <form id="editForm" method="POST" action="{{ .Paths.Save }}">
+    <details open="true">
+      <summary>Main content</summary>
+
+      <table>
+        <tr>
+          <td> <label for="id">ID: </label></td>
+          <td>
+            <input type="text" id="id" name="id" placeholder="ID" value="{{ .CurrentItem.Id }}" />
+          </td>
+        </tr>
+        <tr>
+          <td><label for="title">Title: </label></td>
+          <td><input type="text" id="title" name="title" placeholder="Title" value="{{ .CurrentItem.Title }}" /></td>
+        </tr>
+
+        <tr>
+          <td><label for="source-url">URL: </label></td>
+          <td><input type="url" id="source-url" name="source-url" placeholder="URL"
+              value="{{ .CurrentItem.Source.UrlString}}" />
+          </td>
+        </tr>
+
+        <tr>
+          <td><label for="source">From / by: </label></td>
+          <td><input type="text" id="source" name="source" placeholder="Source"
+              value="{{ .CurrentItem.Source.Text }}" /></td>
+        </tr>
+      </table>
+
+    </details>
 
     <details>
       <summary>Reading state</summary>
-      <input type="date" id="added" name="added" placeholder="Added"  value="{{ .CurrentItem.Added }}" />
-      <input type="checkbox" id="read-set" name="read-set"  value="{{ .CurrentItem.Read.IsZero }}" />
+      <input type="date" id="added" name="added" placeholder="Added" value="{{ .CurrentItem.Added }}" />
+      <input type="checkbox" id="read-set" name="read-set" value="{{ .CurrentItem.Read.IsZero }}" />
       <input type="date" id="read" name="read" placeholder="Read" value="{{ .CurrentItem.Read }}" />
       <input type="checkbox" id="review-set" name="review-set" value="{{.CurrentItem.Reviewed.IsZero }}" />
       <input type="date" id="reviewed" name="reviewed" placeholder="Reviewed" value="{{.CurrentItem.Reviewed}}" />

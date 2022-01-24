@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/cceckman/reading-list/server"
 	"github.com/cceckman/reading-list/server/entry"
@@ -34,6 +35,8 @@ func getServer() *server.Server {
 			Uri:  "https://www.sglavoie.com/posts/2019/11/10/using-dmenu-to-optimize-common-tasks/",
 			Text: "Sébastien Lavoie",
 		},
+		Added: time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
+		Read:  time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
 	}
 
 	if *allowLocal {

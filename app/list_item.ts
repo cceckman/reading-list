@@ -1,6 +1,6 @@
 
 // A view for an item in the reading list.
-export class ListItem extends HTMLElement {
+class ListItem extends HTMLElement {
   constructor() {
     super();
 
@@ -16,4 +16,6 @@ export class ListItem extends HTMLElement {
   }
 }
 
-customElements.define('list-item', ListItem);
+export function AddListItem() {
+  customElements.define('list-item', ListItem);
+}

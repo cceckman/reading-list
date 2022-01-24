@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"time"
 
 	"github.com/cceckman/reading-list/server/entry"
 	"github.com/cceckman/reading-list/server/paths"
@@ -13,8 +14,19 @@ import (
 
 //go:embed *.html body/* menu/*
 var templates embed.FS
+var embeddedTemplates *template.Template
 
-var embeddedTemplates *template.Template = template.Must(template.ParseFS(templates, "*.html", "*/*.html"))
+func init() {
+	embeddedTemplates = loadTemplates(templates)
+}
+
+func loadTemplates(fs fs.FS) *template.Template {
+	funcs := template.FuncMap{
+		"maybeDate": formatDate,
+	}
+
+	return template.Must(template.New("main.html").Funcs(funcs).ParseFS(fs, "*.html", "*/*.html"))
+}
 
 // Return a renderer that uses templates embedded in the binary.
 func New() Renderer {
@@ -25,7 +37,7 @@ func NewFromFs(fs fs.FS) Renderer {
 	return func(name string) *template.Template {
 		// Re-load all templates on every lookup.
 		// Yes, this is expensive; but it means we get "live" templates at every refresh.
-		return template.Must(template.ParseFS(templates, "*.html", "*/*.html")).Lookup(name)
+		return loadTemplates(fs)
 	}
 }
 
@@ -35,6 +47,16 @@ type Renderer getTemplate
 // Indirection layer for "get template".
 // This allows rewriting templates at runtime when operating in "local" mode.
 type getTemplate func(name string) *template.Template
+
+// Formatting function for entry dates.
+func formatDate(d time.Time) string {
+	const dateFormat = "2006-01-02"
+	if d.IsZero() {
+		return "—"
+	} else {
+		return d.Format(dateFormat)
+	}
+}
 
 // Fill for templates.
 type fill struct {

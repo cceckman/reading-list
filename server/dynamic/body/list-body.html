@@ -5,19 +5,19 @@
       <tr>
         <td>&#x2757;</td>
         <td>
-          <slot name="discoveredDate">&mdash;</slot>
+          <slot name="discoveredDate"></slot>
         </td>
       </tr>
       <tr>
         <td>&#128366;</td>
         <td>
-          <slot name="readDate">&mdash;</slot>
+          <slot name="readDate"></slot>
         </td>
       </tr>
       <tr>
         <td>&#128393;</td>
         <td>
-          <slot name="revieweddate">&mdash;</slot>
+          <slot name="reviewedDate"></slot>
         </td>
       </tr>
     </table>
@@ -30,31 +30,31 @@
       </h3>
       <!-- TODO: Other metadata? -->
     </div>
-    <form method="get">
-      <slot name="originalId"></slot>
-      <button class="editButton" name="Edit">&#128393;</button>
-    </form>
+    <div class="itemEdit">
+      <slot name="editor">
+        <button class="editButton" name="Edit" disabled>&#128393;</button>
+      </slot>
+    </div>
   </div>
 </template>
 
+{{ $editPath := .Paths.Edit -}}
 {{ range .ListItems }}
 <list-item>
-  <span slot="discoveredDate">{{ .Added }}</span>
-  <span slot="readDate">
-    {{ if .Read.IsZero }}&mdash;
-    {{- else }}{{ .Read }}{{ end }}
-  </span>
-  <span slot="discoveredDate">
-    {{ if .Reviewed.IsZero }}&mdash;
-    {{- else }}{{ .Reviewed }}{{ end }}
-  </span>
-  <span slot="title">{{ .Title }}</span>
-  <span slot="source">
+  <span slot="discoveredDate">{{ maybeDate .Added }}</span>
+  <span slot="readDate">{{ maybeDate .Read }}</span>
+  <span slot="reviewedDate">{{ maybeDate .Reviewed }}</span>
+  <span slot="title">
     {{ if .Source.UrlString -}}
-      <a href="{{ .Source.UrlString }}" target="_blank">{{ .Source.Text}}</a>
+    <a href="{{ .Source.UrlString }}" target="_blank">{{ .Title }}</a>
     {{ else -}}
-    {{ .Source.Text -}}
+    {{ .Title -}}
     {{ end }}
   </span>
+  <span slot="source">from {{ .Source.Text -}}</span>
+  <form class="entryEdit" slot="editor" method="get" action="{{ $editPath }}">
+    <input slot="originalId" type="hidden" name="id" value="{{ .Id }}" />
+    <button class="editButton">&#128393;</button>
+  </form>
 </list-item>
 {{ end }}

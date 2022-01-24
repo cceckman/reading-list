@@ -18,6 +18,17 @@ html, body {
   background-color: teal;
   color: white;
   padding: 0.5em;
+
+  display: flex;
+  flex-direction: row;
+}
+
+.filler {
+  flex-grow: 2;
+}
+
+.menu-right {
+  text-align: right;
 }
 
 .main {
@@ -43,16 +54,25 @@ html, body {
 
 .listItem .itemInfo {
   flex-grow: 1;
+  padding: 2pt;
+}
+
+.itemEdit {
+  flex-grow: 0;
 }
 
 .listItem .visibilityInfo {
   text-align: center;
   margin: 2pt;
+  padding: 2pt;
 }
 
-.listItem form {
-  display: inherit;
-  margin: inherit;
+form.entryEdit {
+  height: 100%;
+  margin: 2pt;
+}
+button.editButton {
+  height: 100%;
 }
 
 form.menu {
@@ -94,4 +114,8 @@ form.menu {
 
 .invisible {
   visibility: hidden;
+}
+
+.editArea label {
+  clear: left;
 }

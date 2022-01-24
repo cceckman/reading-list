@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"math"
 	"net/http"
 
 	"github.com/cceckman/reading-list/server/dynamic"
@@ -71,14 +70,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveList(w http.ResponseWriter, r *http.Request) {
-	items, err := s.manager.List(math.MaxInt)
+	// TODO: Don't have an arbitrary queue length; do better filtering in other dimensions.
+	items, err := s.manager.List(100)
 	if err != nil {
 		log.Printf("error in serving list request: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "error in serving list request: %v", err)
 		return
 	}
-	s.dynamic.List(w, s.paths, items)
+	if err := s.dynamic.List(w, s.paths, items); err != nil {
+		log.Printf("error rendering list template: %v", err)
+	}
 }
 
 func (s *Server) serveEdit(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +98,10 @@ func (s *Server) serveEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.dynamic.Edit(w, s.paths, e)
+	if err := s.dynamic.Edit(w, s.paths, e); err != nil {
+		log.Printf("error rendering list template: %v", err)
+	}
+
 }
 
 func (s *Server) serveDefault(w http.ResponseWriter, r *http.Request) {

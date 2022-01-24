@@ -21,7 +21,7 @@
       {{ if .CurrentItem -}}
       {{ template "edit-body.html" . -}}
       {{ else -}}
-      {{ template "list-body.html" .ListItems -}}
+      {{ template "list-body.html" . -}}
       {{ end }}
     </div>
   </div>

@@ -14,6 +14,9 @@ func (em *TestEntryManager) List(limit int) ([]*Entry, error) {
 	if em.ListError != nil {
 		return nil, em.ListError
 	}
+	if limit > len(em.Items) {
+		limit = len(em.Items)
+	}
 	items := make([]*Entry, 0, limit)
 	for _, v := range em.Items {
 		items = append(items, v)

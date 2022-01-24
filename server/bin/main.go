@@ -23,26 +23,31 @@ var (
 	useTsNet   = flag.Bool("tsnet", true, "Connect directly to Tailscale via tsnet")
 )
 
-func main() {
-	flag.Parse()
+func getServer() *server.Server {
+	m := &entry.TestEntryManager{
+		Items: make(map[string]*entry.Entry),
+	}
+	m.Items["dmenu-menus"] = &entry.Entry{
+		Id:    "dmenu-menus",
+		Title: "Using dmenu to Optimize Common Tasks",
+		Source: entry.Source{
+			Uri:  "https://www.sglavoie.com/posts/2019/11/10/using-dmenu-to-optimize-common-tasks/",
+			Text: "Sébastien Lavoie",
+		},
+	}
 
-	var m entry.TestEntryManager
-
-	var s *server.Server
 	if *allowLocal {
 		log.Print("Serving from local directories")
-		s = server.NewFs(paths.Default, &m, os.DirFS("static"), os.DirFS("dynamic"))
+		return server.NewFs(paths.Default, m, os.DirFS("static"), os.DirFS("dynamic"))
 	} else {
 		log.Print("Serving from embedded files")
-		s = server.New(paths.Default, &m)
+		return server.New(paths.Default, m)
 	}
+}
 
-	logSettings, err := serverLog.Settings()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func getListener() net.Listener {
 	var ln net.Listener
+	var err error
 	if *useTsNet {
 		s := &tsnet.Server{
 			Hostname: "reading-list",
@@ -55,11 +60,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tls := tls.NewListener(ln, &tls.Config{
+	return tls.NewListener(ln, &tls.Config{
 		GetCertificate: tailscale.GetCertificate,
 	})
+}
 
-	log.Fatal(http.Serve(tls, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func main() {
+	flag.Parse()
+
+	srv := getServer()
+	ln := getListener()
+
+	logSettings, err := serverLog.Settings()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Fatal(http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if *useTsNet {
 			// Check Tailscale authentication
 			who, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
@@ -74,6 +91,6 @@ func main() {
 		if logSettings.RequestPath {
 			log.Printf("Processing request for %v", r.URL)
 		}
-		s.ServeHTTP(w, r)
+		srv.ServeHTTP(w, r)
 	})))
 }

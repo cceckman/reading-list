@@ -12,6 +12,47 @@ import (
 	"github.com/cceckman/reading-list/server/paths"
 )
 
+func TestList(t *testing.T) {
+	em := entry.TestEntryManager{
+		Items: make(map[string]*entry.Entry),
+	}
+	em.Items["id1"] = &entry.Entry{
+		Id:    "id1",
+		Title: "Entry title",
+	}
+	em.Items["id2"] = &entry.Entry{
+		Id:    "id2",
+		Title: "Entry 2 title",
+	}
+
+	p := paths.Default
+
+	m := server.New(p, &em)
+
+	req := httptest.NewRequest("GET", "/", nil)
+
+	var buf bytes.Buffer
+	resp := httptest.ResponseRecorder{
+		Body: &buf,
+	}
+	m.ServeHTTP(&resp, req)
+
+	if got, want := resp.Code, http.StatusOK; got != want {
+		t.Errorf("wrong response code: got: %v want: %v", got, want)
+	}
+	if !resp.Flushed {
+		t.Error("response not flushed")
+	}
+	body := buf.String()
+	for _, item := range em.Items {
+		if !strings.Contains(body, item.Title) {
+			t.Errorf("missing entry title: %q", item.Title)
+			t.Logf("Contents:\n---\n%+v", body)
+		}
+	}
+
+}
+
 func TestEditById(t *testing.T) {
 	em := entry.TestEntryManager{
 		Items: make(map[string]*entry.Entry),
@@ -21,7 +62,6 @@ func TestEditById(t *testing.T) {
 		Id:    id,
 		Title: "Entry title",
 	}
-	t.Logf("items: %+v", em)
 	p := paths.Default
 
 	m := server.New(p, &em)

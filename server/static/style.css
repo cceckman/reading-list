@@ -1,8 +1,9 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
+@import url('https://fontlibrary.org//face/symbola');
 
 html, body {
   margin: 0px;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Roboto', 'Symbola', sans-serif;
 }
 
 #app {

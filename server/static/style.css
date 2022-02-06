@@ -6,6 +6,13 @@ html, body {
   font-family: 'Roboto', 'Symbola', sans-serif;
 }
 
+/* The default Chrome stylesheet for 'button' seems to reset font-family-
+ * losing Symbola if we don't explicitly inherit.
+ */
+button {
+  font-family: inherit;
+}
+
 #app {
   height: 100vh;
   width: 100vw;

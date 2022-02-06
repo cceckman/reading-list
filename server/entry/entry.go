@@ -3,8 +3,11 @@ package entry
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/url"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/gohugoio/hugo/parser/metadecoders"
 	"github.com/gohugoio/hugo/parser/pageparser"
@@ -130,21 +133,72 @@ func (e *Entry) WriteTo(w io.Writer) (int64, error) {
 	return 0, fmt.Errorf("unimplemented")
 }
 
-// Constructs an Entry from the given "save" form.
+func genId(title string) string {
+	id := title
+	id = strings.TrimSpace(id)
+	// Slugify: make lowercase, and keep only ASCII alnum;
+	// everything else is a space.
+	id = strings.Map(func(r rune) rune {
+		r = unicode.SimpleFold(r)
+		r = unicode.ToLower(r)
+		keep := (unicode.IsDigit(r) || unicode.IsLetter(r)) && r < unicode.MaxASCII
+		if keep {
+			return r
+		} else {
+			return ' '
+		}
+	}, id)
+	// Use `fields` to slugify.
+	return strings.Join(strings.Fields(id), "-")
+}
+
+// Constructs an Entry from the given "save" or "share" form.
 func FromForm(form url.Values) (*Entry, error) {
+	log.Printf("parsing form: %+v", form)
+
+	title := form.Get("title")
+	id := form.Get("id")
+	// If this is a new entry, we need to generate an ID.
+	if id == "" {
+		id = genId(title)
+	}
+
+	// The source URL may come from many places:
+	// The save form and share form go to the same place:
+	u := form.Get("source-url")
+	if u == "" {
+		// On Android, the share form's `text` field
+		if url, err := url.Parse(form.Get("text")); err == nil {
+			u = url.String()
+		}
+	}
+
+	source := form.Get("source")
+	// If we're coming from the share API, we may not have a source.
+	// Use the hostname of the URL if we don't have something better.
+	if u, err := url.Parse(u); err == nil && source == "" {
+		source = u.Host
+	}
+
 	e := &Entry{
-		Id:    form.Get("id"),
-		Title: form.Get("title"),
+		Id:    id,
+		Title: title,
 		Source: Source{
-			Text: form.Get("source"),
-			Uri:  form.Get("source-url"),
+			Text: source,
+			Uri:  u,
 		},
+		Added: time.Now(),
 	}
-	if t, err := time.Parse(DateFormat, form.Get("added")); err != nil {
-		return nil, fmt.Errorf("invalid added date: %w", err)
-	} else {
-		e.Added = t
+
+	// If this is an edit rather than a share:
+	if form.Has("added") {
+		if t, err := time.Parse(DateFormat, form.Get("added")); err != nil {
+			return nil, fmt.Errorf("invalid added date: %w", err)
+		} else {
+			e.Added = t
+		}
 	}
+
 	if form.Get("read-set") != "" {
 		if t, err := time.Parse(DateFormat, form.Get("read-set")); err != nil {
 			return nil, fmt.Errorf("invalid read date: %w", err)

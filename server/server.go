@@ -61,6 +61,7 @@ func (s *Server) setupRouter() {
 	s.mux.Handle(paths.Default.List(), http.HandlerFunc(s.serveList))
 	s.mux.Handle(paths.Default.Edit(), http.HandlerFunc(s.serveEdit))
 	s.mux.Handle(paths.Default.Save(), http.HandlerFunc(s.serveSave))
+	s.mux.Handle(paths.Default.Share(), http.HandlerFunc(s.serveShare))
 	s.mux.Handle("/", http.HandlerFunc(s.serveDefault))
 }
 
@@ -107,13 +108,52 @@ func (s *Server) serveEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveSave(w http.ResponseWriter, r *http.Request) {
-	log.Printf("invoking save handler with request: %+v", r)
-	var finerr error
+	ent, err := s.serveUpdate(w, r)
+	if err != nil {
+		log.Printf("error serving save request: %v", err)
+		return
+	}
+
+	log.Print("manager saved entry")
+	var donePath url.URL
+	{
+		done := make(url.Values)
+		done.Add("done", ent.Id)
+		donePath.Path = s.paths.List()
+		donePath.RawQuery = done.Encode()
+	}
+
+	w.Header().Add("Location", donePath.String())
+	w.WriteHeader(http.StatusSeeOther)
+}
+
+func (s *Server) serveShare(w http.ResponseWriter, r *http.Request) {
+	ent, err := s.serveUpdate(w, r)
+	if err != nil {
+		log.Printf("error serving share request: %v", err)
+		return
+	}
+
+	// Redirect to edit location one the share is complete.
+	log.Print("manager saved new entry")
+	var editPath url.URL
+	{
+		edit := make(url.Values)
+		edit.Add("id", ent.Id)
+		editPath.Path = s.paths.Edit()
+		editPath.RawQuery = edit.Encode()
+	}
+
+	w.Header().Add("Location", editPath.String())
+	w.WriteHeader(http.StatusSeeOther)
+}
+
+func (s *Server) serveUpdate(w http.ResponseWriter, r *http.Request) (ent *entry.Entry, finerr error) {
+	log.Printf("invoking update handler with request: %+v", r)
 	defer func() {
 		if finerr != nil {
-			log.Printf("error in saving data: %v", finerr)
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Failed to save data: %v", finerr)
+			fmt.Fprintf(w, "Failed to update: %v", finerr)
 		}
 	}()
 
@@ -128,24 +168,14 @@ func (s *Server) serveSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("invoking save handler with entry: %+v", e)
+	log.Printf("invoking update handler with entry: %+v", e)
 
 	if err := s.manager.Update(e); err != nil {
 		finerr = fmt.Errorf("error in updating entry: %w", err)
 		return
 	}
 
-	log.Print("manager saved entry")
-	var donePath url.URL
-	{
-		done := make(url.Values)
-		done.Add("done", e.Id)
-		donePath.Path = s.paths.List()
-		donePath.RawQuery = done.Encode()
-	}
-
-	w.Header().Add("Location", donePath.String())
-	w.WriteHeader(http.StatusSeeOther)
+	return e, nil
 }
 
 func (s *Server) serveDefault(w http.ResponseWriter, r *http.Request) {

@@ -12,6 +12,7 @@ import (
 )
 
 const entryKey string = "reading-list"
+const DateFormat = "2006-01-02"
 
 // Metadata for a reading-list entry.
 type Entry struct {
@@ -45,7 +46,7 @@ type Entry struct {
 	// This may be rendered as "found via..."
 	Discovery *Source `yaml:",omitempty"`
 
-	// Original content as read out. This allows the entire entry to be re-serialized.
+	// Original content as read from storage. This allows the entire entry to be re-serialized.
 	original pageparser.ContentFrontMatter `yaml:"-"`
 }
 
@@ -79,7 +80,7 @@ func getStringProperty(key string, m map[string]interface{}) (string, error) {
 }
 
 // Read the front-matter from the input channel.
-// ID is not readable from the
+// ID is not readable from the file itself; it is derived from e.g. the filename.
 func Read(id string, r io.Reader) (*Entry, error) {
 	cfm, err := pageparser.ParseFrontMatterAndContent(r)
 	if err != nil {
@@ -125,6 +126,39 @@ func Read(id string, r io.Reader) (*Entry, error) {
 }
 
 // Marshal the item back to a writer, e.g. a file.
-func (e *Entry) WriteTo(w io.Writer) (int, error) {
+func (e *Entry) WriteTo(w io.Writer) (int64, error) {
 	return 0, fmt.Errorf("unimplemented")
+}
+
+// Constructs an Entry from the given "save" form.
+func FromForm(form url.Values) (*Entry, error) {
+	e := &Entry{
+		Id:    form.Get("id"),
+		Title: form.Get("title"),
+		Source: Source{
+			Text: form.Get("source"),
+			Uri:  form.Get("source-url"),
+		},
+	}
+	if t, err := time.Parse(DateFormat, form.Get("added")); err != nil {
+		return nil, fmt.Errorf("invalid added date: %w", err)
+	} else {
+		e.Added = t
+	}
+	if form.Get("read-set") != "" {
+		if t, err := time.Parse(DateFormat, form.Get("read-set")); err != nil {
+			return nil, fmt.Errorf("invalid read date: %w", err)
+		} else {
+			e.Read = t
+		}
+	}
+	if form.Get("reviewed-set") != "" {
+		if t, err := time.Parse(DateFormat, form.Get("reviewed-set")); err != nil {
+			return nil, fmt.Errorf("invalid reviewed date: %w", err)
+		} else {
+			e.Reviewed = t
+		}
+	}
+
+	return e, nil
 }

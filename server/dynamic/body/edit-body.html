@@ -52,7 +52,7 @@
             <input type="date" id="reviewed" name="reviewed" placeholder="Reviewed" value="{{ .CurrentItem.Reviewed | maybeDate }}" />
           </td>
           <td>
-            <input type="checkbox" id="review-set" name="review-set" value="{{.CurrentItem.Reviewed.IsZero }}" />
+            <input type="checkbox" id="reviewed-set" name="reviewed-set" value="{{.CurrentItem.Reviewed.IsZero }}" />
           </td>
         </tr>
       </table>

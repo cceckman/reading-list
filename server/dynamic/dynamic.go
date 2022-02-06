@@ -50,11 +50,10 @@ type getTemplate func(name string) *template.Template
 
 // Formatting function for entry dates.
 func formatDate(d time.Time) string {
-	const dateFormat = "2006-01-02"
 	if d.IsZero() {
 		return "—"
 	} else {
-		return d.Format(dateFormat)
+		return d.Format(entry.DateFormat)
 	}
 }
 

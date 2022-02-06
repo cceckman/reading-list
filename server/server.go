@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/cceckman/reading-list/server/dynamic"
 	"github.com/cceckman/reading-list/server/entry"
@@ -16,7 +17,7 @@ import (
 type EntryManager interface {
 	// Create(entry.Entry) error
 	Read(id string) (*entry.Entry, error)
-	// Update(entry.Entry) error
+	Update(*entry.Entry) error
 	List(limit int) ([]*entry.Entry, error)
 }
 
@@ -59,6 +60,7 @@ type Server struct {
 func (s *Server) setupRouter() {
 	s.mux.Handle(paths.Default.List(), http.HandlerFunc(s.serveList))
 	s.mux.Handle(paths.Default.Edit(), http.HandlerFunc(s.serveEdit))
+	s.mux.Handle(paths.Default.Save(), http.HandlerFunc(s.serveSave))
 	s.mux.Handle("/", http.HandlerFunc(s.serveDefault))
 }
 
@@ -102,6 +104,48 @@ func (s *Server) serveEdit(w http.ResponseWriter, r *http.Request) {
 		log.Printf("error rendering list template: %v", err)
 	}
 
+}
+
+func (s *Server) serveSave(w http.ResponseWriter, r *http.Request) {
+	log.Printf("invoking save handler with request: %+v", r)
+	var finerr error
+	defer func() {
+		if finerr != nil {
+			log.Printf("error in saving data: %v", finerr)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "Failed to save data: %v", finerr)
+		}
+	}()
+
+	if err := r.ParseForm(); err != nil {
+		finerr = fmt.Errorf("error in parsing form data: %w", err)
+		return
+	}
+
+	e, err := entry.FromForm(r.Form)
+	if err != nil {
+		finerr = fmt.Errorf("error in interpreting form as entry: %w", err)
+		return
+	}
+
+	log.Printf("invoking save handler with entry: %+v", e)
+
+	if err := s.manager.Update(e); err != nil {
+		finerr = fmt.Errorf("error in updating entry: %w", err)
+		return
+	}
+
+	log.Print("manager saved entry")
+	var donePath url.URL
+	{
+		done := make(url.Values)
+		done.Add("done", e.Id)
+		donePath.Path = s.paths.List()
+		donePath.RawQuery = done.Encode()
+	}
+
+	w.Header().Add("Location", donePath.String())
+	w.WriteHeader(http.StatusSeeOther)
 }
 
 func (s *Server) serveDefault(w http.ResponseWriter, r *http.Request) {

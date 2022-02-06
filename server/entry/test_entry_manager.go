@@ -33,3 +33,11 @@ func (em *TestEntryManager) Read(id string) (*Entry, error) {
 		return e, nil
 	}
 }
+
+func (em *TestEntryManager) Update(e *Entry) error {
+	if e.Id == "" {
+		return fmt.Errorf("no ID provided")
+	}
+	em.Items[e.Id] = e
+	return nil
+}

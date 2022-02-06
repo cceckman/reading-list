@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -137,5 +138,58 @@ func TestEditNew(t *testing.T) {
 	}
 	if !resp.Flushed {
 		t.Error("response not flushed")
+	}
+}
+
+func TestSaveOk(t *testing.T) {
+	em := entry.TestEntryManager{
+		Items: make(map[string]*entry.Entry),
+	}
+
+	const id = "id1"
+	const newTitle = "New Entry Title"
+	em.Items[id] = &entry.Entry{
+		Id:    "id1",
+		Title: "Entry title",
+	}
+
+	form := make(url.Values)
+	form["id"] = []string{id}
+	form["title"] = []string{newTitle}
+	form["added"] = []string{"2023-02-06"}
+
+	p := paths.Default
+	m := server.New(p, &em)
+	s := httptest.NewServer(m)
+	client := s.Client()
+
+	// Tweak the client to avoid following redirects.
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	url := s.URL + p.Save()
+	resp, err := client.PostForm(url, form)
+	if err != nil {
+		t.Fatalf("error in processing request: %v", err)
+	}
+
+	// Expect a redirect to the list.
+	if got, want := resp.StatusCode, http.StatusSeeOther; got != want {
+		t.Errorf("wrong response code: got: %v want: %v", got, want)
+	}
+	loc, err := resp.Location()
+	if err != nil {
+		t.Errorf("invalid location for response: %v", err)
+	}
+	if got, want := loc.Path, p.List(); got != want {
+		t.Errorf("wrong resultant response path: got: %q want: %q", got, want)
+	}
+	if got, want := loc.Query().Get("done"), id; got != want {
+		t.Errorf("missing or incorrect completion notification: got: %q want: %q", got, want)
+	}
+
+	if got, want := em.Items[id].Title, newTitle; got != want {
+		t.Errorf("didn't save title: got: %q want: %q", got, want)
 	}
 }

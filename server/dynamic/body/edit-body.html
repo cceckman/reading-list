@@ -33,11 +33,30 @@
 
     <details>
       <summary>Reading state</summary>
-      <input type="date" id="added" name="added" placeholder="Added" value="{{ .CurrentItem.Added }}" />
-      <input type="checkbox" id="read-set" name="read-set" value="{{ .CurrentItem.Read.IsZero }}" />
-      <input type="date" id="read" name="read" placeholder="Read" value="{{ .CurrentItem.Read }}" />
-      <input type="checkbox" id="review-set" name="review-set" value="{{.CurrentItem.Reviewed.IsZero }}" />
-      <input type="date" id="reviewed" name="reviewed" placeholder="Reviewed" value="{{.CurrentItem.Reviewed}}" />
+
+      <table>
+        <tr>
+          <td><label for="added">Added: </label></td>
+          <td><input type="date" id="added" name="added" placeholder="Added" value="{{ .CurrentItem.Added | maybeDate }}" /></td>
+          <td></td>
+        </tr>
+
+        <tr>
+          <td><label for="read">Read: </label></td>
+          <td><input type="date" id="read" name="read" placeholder="Read" value="{{ .CurrentItem.Read | maybeDate }}" />
+          <td><input type="checkbox" id="read-set" name="read-set" value="{{ .CurrentItem.Read.IsZero }}" /></td>
+        </tr>
+        <tr>
+          <td><label for="reviewed">Reviewed: </label></td>
+          <td>
+            <input type="date" id="reviewed" name="reviewed" placeholder="Reviewed" value="{{ .CurrentItem.Reviewed | maybeDate }}" />
+          </td>
+          <td>
+            <input type="checkbox" id="review-set" name="review-set" value="{{.CurrentItem.Reviewed.IsZero }}" />
+          </td>
+        </tr>
+      </table>
+
     </details>
   </form>
 </div>

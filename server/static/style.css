@@ -1,5 +1,8 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
+
 html, body {
   margin: 0px;
+  font-family: 'Roboto', sans-serif;
 }
 
 #app {
@@ -49,7 +52,6 @@ html, body {
   display: flex;
   flex-direction: row;
   width: 100%;
-  padding: 2pt;
 }
 
 .listItem .itemInfo {
@@ -73,6 +75,7 @@ form.entryEdit {
 }
 button.editButton {
   height: 100%;
+  font-size: larger;
 }
 
 form.menu {

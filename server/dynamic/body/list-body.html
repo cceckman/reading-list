@@ -28,6 +28,8 @@
       <h3>
         <slot name="source">[Item Source]</slot>
       </h3>
+      <p><slot name="author">[Item author]</slot></p>
+      <p><slot name="discovery">[Discovery data]</slot></p>
       <!-- TODO: Other metadata? -->
     </div>
     <div class="itemEdit">
@@ -49,7 +51,9 @@
     {{ .Title -}}
     {{ end }}
   </span>
-  <span slot="source">from {{ .Source.Text -}}</span>
+  <span slot="source"><i>from</i> {{ .Source.Text -}}</span>
+  <span slot="author">{{ if .Author }}<i>by</i> {{ template "source.html" .Author }}{{ end }}</span>
+  <span slot="discovery">{{ if .Discovery }}<i>via</i> {{ template "source.html" .Discovery }}{{ end }}</span>
   <form class="entryEdit" slot="editor" method="get" action="{{ $editPath }}">
     <input slot="originalId" type="hidden" name="id" value="{{ .Id }}" />
     <button class="editButton">&#128393;</button>

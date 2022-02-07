@@ -139,9 +139,8 @@ func genId(title string) string {
 	// Slugify: make lowercase, and keep only ASCII alnum;
 	// everything else is a space.
 	id = strings.Map(func(r rune) rune {
-		r = unicode.SimpleFold(r)
 		r = unicode.ToLower(r)
-		keep := (unicode.IsDigit(r) || unicode.IsLetter(r)) && r < unicode.MaxASCII
+		keep := (unicode.IsDigit(r) || unicode.IsLetter(r)) && r <= unicode.MaxASCII
 		if keep {
 			return r
 		} else {
@@ -150,6 +149,24 @@ func genId(title string) string {
 	}, id)
 	// Use `fields` to slugify.
 	return strings.Join(strings.Fields(id), "-")
+}
+
+// Makes a source, if the provided text and URL are nonemty.
+// Otherwise returns nil.
+func makeSource(text, uri string) *Source {
+	if text == "" && uri == "" {
+		return nil
+	}
+	s := &Source{
+		Text: text,
+		Uri:  uri,
+	}
+	if s.Text == "" {
+		if e, err := url.Parse(uri); err == nil {
+			s.Text = e.Host
+		}
+	}
+	return s
 }
 
 // Constructs an Entry from the given "save" or "share" form.
@@ -187,7 +204,10 @@ func FromForm(form url.Values) (*Entry, error) {
 			Text: source,
 			Uri:  u,
 		},
-		Added: time.Now(),
+		Summary:   form.Get("summary"),
+		Added:     time.Now(),
+		Discovery: makeSource(form.Get("discovery"), form.Get("discovery-url")),
+		Author:    makeSource(form.Get("author"), form.Get("author-url")),
 	}
 
 	// If this is an edit rather than a share:
@@ -199,15 +219,15 @@ func FromForm(form url.Values) (*Entry, error) {
 		}
 	}
 
-	if form.Get("read-set") != "" {
-		if t, err := time.Parse(DateFormat, form.Get("read-set")); err != nil {
+	if form.Get("read") != "" {
+		if t, err := time.Parse(DateFormat, form.Get("read")); err != nil {
 			return nil, fmt.Errorf("invalid read date: %w", err)
 		} else {
 			e.Read = t
 		}
 	}
-	if form.Get("reviewed-set") != "" {
-		if t, err := time.Parse(DateFormat, form.Get("reviewed-set")); err != nil {
+	if form.Get("reviewed") != "" {
+		if t, err := time.Parse(DateFormat, form.Get("reviewed")); err != nil {
 			return nil, fmt.Errorf("invalid reviewed date: %w", err)
 		} else {
 			e.Reviewed = t

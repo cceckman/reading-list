@@ -2,6 +2,7 @@ package entry_test
 
 import (
 	"bytes"
+	"net/url"
 	"testing"
 
 	"github.com/cceckman/reading-list/server/entry"
@@ -77,4 +78,23 @@ date: 2021-09-08
 	if got, want := front.Title, "Some document title"; got != want {
 		t.Errorf("unexpected title: got: %q want: %q", got, want)
 	}
+}
+
+func TestShareEncoding(t *testing.T) {
+	form := make(url.Values)
+	form.Add("title", "Reading List Admin")
+	form.Add("url", "https://reading-list.tailname-scalename.ts.net")
+
+	e, err := entry.FromForm(form)
+	if err != nil {
+		t.Fatal("unexpected error: ", err)
+	}
+
+	if got, want := e.Id, "reading-list-admin"; got != want {
+		t.Errorf("unexpected ID: got %q want %q", got, want)
+	}
+
+	t.Error("Test more fields")
+	// Why does "Reading List Admin" get its 's' zeroed out?
+
 }

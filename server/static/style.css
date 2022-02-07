@@ -130,3 +130,9 @@ form.menu {
 .editArea label {
   clear: left;
 }
+
+textarea#summary {
+  clear:both;
+  width: 100%;
+  height: 10ex;
+}

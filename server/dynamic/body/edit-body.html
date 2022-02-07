@@ -1,5 +1,5 @@
 <div id="editArea">
-  <form id="editForm" method="POST" action="{{ .Paths.Save }}">
+  <form id="editForm" method="POST" action="{{ .Paths.Save }}" autocomplete="off">
     <details open="true">
       <summary>Main content</summary>
 
@@ -7,27 +7,34 @@
         <tr>
           <td> <label for="id">ID: </label></td>
           <td>
-            <input type="text" id="id" name="id" placeholder="ID" value="{{ .CurrentItem.Id }}" />
+            <input type="text" id="id" name="id" placeholder="hearts-automaton" value="{{ .CurrentItem.Id }}"
+              {{- if .CurrentItem.Id }} readonly {{ end }} />
           </td>
         </tr>
         <tr>
           <td><label for="title">Title: </label></td>
-          <td><input type="text" id="title" name="title" placeholder="Title" value="{{ .CurrentItem.Title }}" /></td>
+          <td><input type="text" id="title" name="title" placeholder="An Automaton of Hearts" value="{{ .CurrentItem.Title }}" /></td>
+        </tr>
+
+        <tr>
+          <td><label for="source">At: </label></td>
+          <td><input type="text" id="source" name="source" placeholder="@happyautomata on Twitter"
+              value="{{ .CurrentItem.Source.Text }}" /></td>
         </tr>
 
         <tr>
           <td><label for="source-url">URL: </label></td>
-          <td><input type="url" id="source-url" name="source-url" placeholder="URL"
+          <td><input type="url" id="source-url" name="source-url" placeholder="https://twitter.com/happyautomata/status/1422047515302522883"
               value="{{ .CurrentItem.Source.UrlString}}" />
           </td>
         </tr>
 
-        <tr>
-          <td><label for="source">From / by: </label></td>
-          <td><input type="text" id="source" name="source" placeholder="Source"
-              value="{{ .CurrentItem.Source.Text }}" /></td>
-        </tr>
       </table>
+
+      <label for="summary">Summary:</label>
+      <textarea name="summary" id="summary" form="editForm" placeholder="This is what the article means...">
+        {{- .CurrentItem.Summary -}}
+      </textarea>
 
     </details>
 
@@ -37,26 +44,61 @@
       <table>
         <tr>
           <td><label for="added">Added: </label></td>
-          <td><input type="date" id="added" name="added" placeholder="Added" value="{{ .CurrentItem.Added | maybeDate }}" /></td>
+          <td><input type="date" id="added" name="added" placeholder="Added" value="{{ .CurrentItem.Added | orToday }}" /></td>
           <td></td>
         </tr>
-
         <tr>
           <td><label for="read">Read: </label></td>
-          <td><input type="date" id="read" name="read" placeholder="Read" value="{{ .CurrentItem.Read | maybeDate }}" />
-          <td><input type="checkbox" id="read-set" name="read-set" value="{{ .CurrentItem.Read.IsZero }}" /></td>
+          <td><input type="date" id="read" name="read" placeholder="Read"
+              {{ if not .CurrentItem.Read.IsZero -}}
+              value="{{ .CurrentItem.Read | maybeDate }}"
+              {{- end }} />
         </tr>
         <tr>
           <td><label for="reviewed">Reviewed: </label></td>
-          <td>
-            <input type="date" id="reviewed" name="reviewed" placeholder="Reviewed" value="{{ .CurrentItem.Reviewed | maybeDate }}" />
-          </td>
-          <td>
-            <input type="checkbox" id="reviewed-set" name="reviewed-set" value="{{.CurrentItem.Reviewed.IsZero }}" />
-          </td>
+          <td><input type="date" id="Reviewed" name="Reviewed" placeholder="Read"
+              {{ if not .CurrentItem.Reviewed.IsZero -}}
+              value="{{ .CurrentItem.Reviewed | maybeDate }}"
+              {{- end }} />
         </tr>
       </table>
-
     </details>
+
+    <details>
+      <summary>Author</summary>
+      <table>
+        <tr>
+          <td><label for="author">By: </label></td>
+          <td><input type="text" id="author" name="author" placeholder="Charles Eckman"
+              {{- if .CurrentItem.Author }} value="{{ .CurrentItem.Author.Text }}"{{ end }} /></td>
+        </tr>
+
+        <tr>
+          <td><label for="author-url">At URL: </label></td>
+          <td><input type="text" id="author-url" name="author-url" placeholder="https://cceckman.com"
+              {{- if .CurrentItem.Author }}value="{{ .CurrentItem.Author.UrlString }}"{{ end }} /></td>
+        </tr>
+      </table>
+    </details>
+
+    <details>
+      <summary>Discovery</summary>
+      <table>
+        <tr>
+          <td><label for="discovery">Found via: </label></td>
+          <td><input type="text" id="discovery" name="discovery" placeholder="Charles Eckman on Twitter"
+              {{- if .CurrentItem.Discovery }} value="{{ .CurrentItem.Discovery.Text }}"{{ end }} /></td>
+        </tr>
+
+        <tr>
+          <td><label for="discovery-url">At URL: </label></td>
+          <td><input type="text" id="discovery-url" name="discovery-url" placeholder="https://twitter.com/cceckman"
+              {{- if .CurrentItem.Discovery }}value="{{ .CurrentItem.Discovery.UrlString }}"{{ end }} /></td>
+        </tr>
+      </table>
+    </details>
+
+
+
   </form>
 </div>

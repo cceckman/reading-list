@@ -22,7 +22,8 @@ func init() {
 
 func loadTemplates(fs fs.FS) *template.Template {
 	funcs := template.FuncMap{
-		"maybeDate": formatDate,
+		"maybeDate": maybeDate,
+		"orToday":   orToday,
 	}
 
 	return template.Must(template.New("main.html").Funcs(funcs).ParseFS(fs, "*.html", "*/*.html"))
@@ -49,9 +50,18 @@ type Renderer getTemplate
 type getTemplate func(name string) *template.Template
 
 // Formatting function for entry dates.
-func formatDate(d time.Time) string {
+func maybeDate(d time.Time) string {
 	if d.IsZero() {
 		return "—"
+	} else {
+		return d.Format(entry.DateFormat)
+	}
+}
+
+// Alternative formatting function: default to "today"
+func orToday(d time.Time) string {
+	if d.IsZero() {
+		return time.Now().Format(entry.DateFormat)
 	} else {
 		return d.Format(entry.DateFormat)
 	}

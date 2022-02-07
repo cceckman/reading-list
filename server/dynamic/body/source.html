@@ -1,0 +1,5 @@
+{{ if .UrlString -}}
+  <a href="{{ .UrlString }}" target="_blank">{{ .Text }}</a>
+{{ else -}}
+  {{ .Text -}}
+{{ end }}

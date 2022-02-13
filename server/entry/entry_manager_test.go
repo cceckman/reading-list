@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/cceckman/reading-list/server/entry"
 	"github.com/google/go-cmp/cmp"
@@ -67,6 +68,101 @@ func TestManagerRead(t *testing.T) {
 	}
 
 	if diff := cmp.Diff(e, eRef, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
+		t.Error("unexpected diffs when read: ", diff)
+	}
+
+}
+
+func TestManagerList(t *testing.T) {
+	m := entry.NewManager(fakeDirectory(t))
+	es, err := m.List(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(es) != 1 {
+		t.Fatalf("unexpected number of entries: got: %d", len(es))
+	}
+	rd := bytes.NewBufferString(fakeEntry)
+	eRef, err := entry.Read(fakeId, rd)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(es[0], eRef, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
+		t.Error("unexpected diffs when read: ", diff)
+	}
+}
+
+func TestManagerCreate(t *testing.T) {
+	const newFakeId = "new-entry"
+	now := time.Now()
+	e := entry.Entry{
+		Id:      newFakeId,
+		Title:   "A new fake entry",
+		Summary: "New fake entry for testing",
+		Source: entry.Source{
+			Text: "entry_manager_test.go",
+		},
+		Author: &entry.Source{
+			Text: "cceckman",
+			Uri:  "https://github.com/cceckman",
+		},
+		Added: entry.Date{now},
+	}
+	dir := fakeDirectory(t)
+	m := entry.NewManager(dir)
+	if err := m.Update(&e); err != nil {
+		t.Fatal(err)
+	}
+
+	f, err := dir.Open(newFakeId + ".md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	eRecovered, err := entry.Read(newFakeId, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(eRecovered, e, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
+		t.Error("unexpected diffs when read: ", diff)
+	}
+
+}
+
+func TestManagerUpdate(t *testing.T) {
+	t.Error("unimplemented test")
+	const newFakeId = "new-entry"
+	now := time.Now()
+	e := entry.Entry{
+		Id:      newFakeId,
+		Title:   "A new fake entry",
+		Summary: "New fake entry for testing",
+		Source: entry.Source{
+			Text: "entry_manager_test.go",
+		},
+		Author: &entry.Source{
+			Text: "cceckman",
+			Uri:  "https://github.com/cceckman",
+		},
+		Added: entry.Date{now},
+	}
+	dir := fakeDirectory(t)
+	m := entry.NewManager(dir)
+	if err := m.Update(&e); err != nil {
+		t.Fatal(err)
+	}
+
+	f, err := dir.Open(newFakeId + ".md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	eRecovered, err := entry.Read(newFakeId, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(eRecovered, e, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
 		t.Error("unexpected diffs when read: ", diff)
 	}
 

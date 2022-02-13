@@ -46,6 +46,11 @@ func (s *EntryManager) Update(*Entry) error {
 }
 
 func (s *EntryManager) List(limit int) ([]*Entry, error) {
+	matches, err := fs.Glob(s.dataDir, "*.md")
+	if err != nil {
+		return nil, fmt.Errorf("could not list entries: %w", err)
+	}
+	_ = matches
 	return nil, fmt.Errorf("unimplemented")
 }
 

@@ -8,6 +8,8 @@ require (
 	tailscale.com v1.18.2
 )
 
+require github.com/google/go-cmp v0.5.6
+
 require (
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20210105120005-909beea2cc74 // indirect
@@ -17,7 +19,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.0.5 // indirect
 	github.com/google/btree v1.0.1 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210621130208-1cac67f12b1e // indirect
 	github.com/josharian/native v0.0.0-20200817173448-b6b71def0850 // indirect
 	github.com/jsimonetti/rtnetlink v0.0.0-20210525051524-4cc836578190 // indirect
@@ -28,6 +29,8 @@ require (
 	github.com/mdlayher/socket v0.0.0-20210307095302-262dc9984e00 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/niklasfasching/go-org v1.6.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.0-beta.3.0.20210727221244-fa0796069526 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -53,6 +56,7 @@ require (
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20211116201604-de7c702ace45 // indirect
 	golang.zx2c4.com/wireguard/windows v0.4.10 // indirect
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6 // indirect
 	inet.af/netstack v0.0.0-20211101182044-1c1bcf452982 // indirect

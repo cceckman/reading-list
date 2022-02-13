@@ -15,7 +15,6 @@ import (
 
 // Interface for managing entries.
 type EntryManager interface {
-	// Create(entry.Entry) error
 	Read(id string) (*entry.Entry, error)
 	Update(*entry.Entry) error
 	List(limit int) ([]*entry.Entry, error)

@@ -4,30 +4,22 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"strings"
-	"unicode"
 )
 
 // Create a new EntryManager for the given directory.
-func NewManager(dataDir fs.FS) EntryManager {
-	return EntryManager{
+func NewManager(dataDir fs.FS) *EntryManager {
+	return &EntryManager{
 		dataDir: dataDir,
 	}
 }
 
-func slug(title string) string {
-	lower := strings.ToLower(title)
-	return strings.Map(func(c rune) rune {
-		if unicode.IsLetter(c) {
-			return c
-		} else {
-			return '-'
-		}
-	}, lower)
-}
-
-func filename(slug string) string {
-	return slug + ".md"
+// An object like a read-write file.
+type rwfile interface {
+	fs.File
+	io.Reader
+	io.Writer
+	io.Closer
+	io.Seeker
 }
 
 // EntryManager provides CRUD updates to persisted Entrys.
@@ -35,19 +27,37 @@ type EntryManager struct {
 	dataDir fs.FS
 }
 
-// Write an entry out to storage.
-// We require a separate "key" so that the entry's title can change without creating a duplicate entry.
-func (s *EntryManager) write(w io.WriteCloser, e *Entry, body io.Reader) error {
+// Read the entry with the given contents out from storage.
+func (s *EntryManager) Read(id string) (*Entry, error) {
+	f, err := s.getFile(id)
+	if err != nil {
+		return nil, fmt.Errorf("could not read entry: %w", err)
+	}
+	ent, err := Read(id, f)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse entry: %w", err)
+	}
+	return ent, nil
+}
+
+// Update (or create) the entry.
+func (s *EntryManager) Update(*Entry) error {
 	return fmt.Errorf("unimplemented")
 }
 
-// Read the entry with the given contents out from storage.
-func (s *EntryManager) Read(id string) (*Entry, error) {
+func (s *EntryManager) List(limit int) ([]*Entry, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
 
-// Create a stub entry as described by the arguments.
-// Returns the ID of the new item.
-func (s *EntryManager) Create(title, rawUrl string) (string, error) {
-	return "", fmt.Errorf("unimplemented")
+func (s *EntryManager) getFile(id string) (rwfile, error) {
+	name := id + ".md"
+	f, err := s.dataDir.Open(name)
+	if err != nil {
+		return nil, fmt.Errorf("could not open file %s: %w", name, err)
+	}
+	rwf, ok := f.(rwfile)
+	if !ok {
+		return nil, fmt.Errorf("could not treat file as read/write/seek/close (file: %s)", name)
+	}
+	return rwf, nil
 }

@@ -17,6 +17,36 @@ import (
 const entryKey string = "reading-list"
 const DateFormat = "2006-01-02"
 
+// Customize unmarshalling, so we can use short dates.
+type Date struct {
+	time.Time
+}
+
+// Lax date parsing: Allow extended format or date-only.
+func ParseDate(s string) (Date, error) {
+	var d Date
+	var rawTime time.Time
+	var err error
+	if rawTime, err = time.Parse(time.RFC3339, s); err == nil {
+		d.Time = rawTime
+	} else if rawTime, err = time.Parse(DateFormat, s); err == nil {
+		d.Time = rawTime
+	} else if err != nil {
+		return d, err
+	}
+	return d, nil
+}
+
+func (d *Date) UnmarshalYAML(value *yaml.Node) error {
+	if dd, err := ParseDate(value.Value); err != nil {
+		return err
+	} else {
+
+		*d = dd
+		return nil
+	}
+}
+
 // Metadata for a reading-list entry.
 type Entry struct {
 	// ID of the entry; e.g. a slug.
@@ -38,12 +68,12 @@ type Entry struct {
 	Author *Source `yaml:",omitempty"`
 
 	// When was this item added to the reading list?
-	Added time.Time `yaml:",omitempty"`
+	Added Date `yaml:",omitempty"`
 
 	// When this entry was moved from "in the queue" to "read".
-	Read time.Time `yaml:",omitempty"`
+	Read Date `yaml:",omitempty"`
 	// When commentary on this entry was made available.
-	Reviewed time.Time `yaml:",omitempty"`
+	Reviewed Date `yaml:",omitempty"`
 
 	// Discovery data: how did I come across this item?
 	// This may be rendered as "found via..."
@@ -205,32 +235,29 @@ func FromForm(form url.Values) (*Entry, error) {
 			Uri:  u,
 		},
 		Summary:   form.Get("summary"),
-		Added:     time.Now(),
+		Added:     Date{time.Now()},
 		Discovery: makeSource(form.Get("discovery"), form.Get("discovery-url")),
 		Author:    makeSource(form.Get("author"), form.Get("author-url")),
 	}
 
+	var err error
 	// If this is an edit rather than a share:
 	if form.Has("added") {
-		if t, err := time.Parse(DateFormat, form.Get("added")); err != nil {
+		e.Added, err = ParseDate(form.Get("added"))
+		if err != nil {
 			return nil, fmt.Errorf("invalid added date: %w", err)
-		} else {
-			e.Added = t
 		}
 	}
-
-	if form.Get("read") != "" {
-		if t, err := time.Parse(DateFormat, form.Get("read")); err != nil {
+	if form.Has("read") {
+		e.Read, err = ParseDate(form.Get("read"))
+		if err != nil {
 			return nil, fmt.Errorf("invalid read date: %w", err)
-		} else {
-			e.Read = t
 		}
 	}
-	if form.Get("reviewed") != "" {
-		if t, err := time.Parse(DateFormat, form.Get("reviewed")); err != nil {
+	if form.Has("reviewed") {
+		e.Reviewed, err = ParseDate(form.Get("reviewed"))
+		if err != nil {
 			return nil, fmt.Errorf("invalid reviewed date: %w", err)
-		} else {
-			e.Reviewed = t
 		}
 	}
 

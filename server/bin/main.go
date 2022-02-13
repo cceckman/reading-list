@@ -21,24 +21,32 @@ import (
 var (
 	addr       = flag.String("addr", ":443", "Port or address:port to listen on")
 	allowLocal = flag.Bool("allowLocal", false, "Allow serving from the local static/ directory rather than embedded content. Development only.")
+	storageDir = flag.String("storageDir", "", "Directory to use for entry management. If empty, uses an in-memory entry store.")
 	useTsNet   = flag.Bool("tsnet", true, "Connect directly to Tailscale via tsnet")
 )
 
-func getServer() *server.Server {
-	m := &entry.TestEntryManager{
-		Items: make(map[string]*entry.Entry),
+func getEntryManager() server.EntryManager {
+	if *storageDir == "" {
+		m := &entry.TestEntryManager{
+			Items: make(map[string]*entry.Entry),
+		}
+		m.Items["dmenu-menus"] = &entry.Entry{
+			Id:    "dmenu-menus",
+			Title: "Using dmenu to Optimize Common Tasks",
+			Source: entry.Source{
+				Uri:  "https://www.sglavoie.com/posts/2019/11/10/using-dmenu-to-optimize-common-tasks/",
+				Text: "Sébastien Lavoie",
+			},
+			Added: time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
+			Read:  time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
+		}
+		return m
 	}
-	m.Items["dmenu-menus"] = &entry.Entry{
-		Id:    "dmenu-menus",
-		Title: "Using dmenu to Optimize Common Tasks",
-		Source: entry.Source{
-			Uri:  "https://www.sglavoie.com/posts/2019/11/10/using-dmenu-to-optimize-common-tasks/",
-			Text: "Sébastien Lavoie",
-		},
-		Added: time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
-		Read:  time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
-	}
+	return entry.NewManager(os.DirFS(*storageDir))
+}
 
+func getServer() *server.Server {
+	m := getEntryManager()
 	if *allowLocal {
 		log.Print("Serving from local directories")
 		return server.NewFs(paths.Default, m, os.DirFS("static"), os.DirFS("dynamic"))

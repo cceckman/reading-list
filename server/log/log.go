@@ -4,6 +4,7 @@ package log
 import (
 	"flag"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -21,6 +22,8 @@ type LogSettings struct {
 // the (parsed) settings are still returned even if there is an error.
 // This means it's up to the caller to error or return!
 func Settings() (LogSettings, error) {
+	log.SetFlags(log.Ldate | log.Ltime | log.LUTC | log.Lshortfile)
+
 	flag.Parse()
 	modules := strings.Split(*logmodule, ",")
 	var unrecognizedModules []string

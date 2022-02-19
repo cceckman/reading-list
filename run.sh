@@ -10,4 +10,4 @@ redo -j$(nproc) server/reading-list."$ARCH"
 
 export TAILSCALE_USE_WIP_CODE=true
 cd "$(dirname $(realpath $0))"/server
-exec ./reading-list."$ARCH" --allowLocal --logmodule=all
+exec ./reading-list."$ARCH" --allowLocal --logmodule=all --storageDir=testdata

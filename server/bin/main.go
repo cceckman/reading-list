@@ -37,12 +37,16 @@ func getEntryManager() server.EntryManager {
 				Uri:  "https://www.sglavoie.com/posts/2019/11/10/using-dmenu-to-optimize-common-tasks/",
 				Text: "Sébastien Lavoie",
 			},
-			Added: time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
-			Read:  time.Date(2022, time.January, 23, 0, 0, 0, 0, time.Local),
+			Added: entry.Date{Time: time.Now()},
+			Read:  entry.Date{Time: time.Now()},
 		}
 		return m
 	}
-	return entry.NewManager(os.DirFS(*storageDir))
+	m, err := entry.NewManager(os.DirFS(*storageDir))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return m
 }
 
 func getServer() *server.Server {

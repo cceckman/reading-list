@@ -3,8 +3,8 @@ package entry
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -20,6 +20,22 @@ const DateFormat = "2006-01-02"
 // Customize unmarshalling, so we can use short dates.
 type Date struct {
 	time.Time
+}
+
+// Sorts a list of *Entrys in FIFO order: oldest unread item first.
+func FifoSort(list []*Entry) {
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Read.IsZero() {
+			// If they're both unread, order by added date.
+			if list[j].Read.IsZero() {
+				return list[j].Added.After(list[i].Added.Time)
+			}
+			// If i is unread, it's less than j.
+			return true
+		}
+		// i and j have both been read. Order by read date.
+		return list[j].Read.After(list[i].Read.Time)
+	})
 }
 
 // Lax date parsing: Allow extended format or date-only.
@@ -114,20 +130,20 @@ func getStringProperty(key string, m map[string]interface{}) (string, error) {
 
 // Read the front-matter from the input channel.
 // ID is not readable from the file itself; it is derived from e.g. the filename.
-func Read(id string, r io.Reader) (*Entry, error) {
+func Read(id string, r io.Reader) (Entry, error) {
 	cfm, err := pageparser.ParseFrontMatterAndContent(r)
 	if err != nil {
-		return nil, fmt.Errorf("could not get reading list entry from %s: %w", id, err)
+		return Entry{}, fmt.Errorf("could not get reading list entry from %s: %w", id, err)
 	}
 	if cfm.FrontMatterFormat != metadecoders.YAML {
-		return nil, fmt.Errorf("reading list entry for %s is not in YAML format", id)
+		return Entry{}, fmt.Errorf("reading list entry for %s is not in YAML format", id)
 	}
 	properties := cfm.FrontMatter
 
 	var title string
 	var summary string
 	if title, err = getStringProperty("title", properties); err != nil {
-		return nil, fmt.Errorf("could not get title for %s: %w", id, err)
+		return Entry{}, fmt.Errorf("could not get title for %s: %w", id, err)
 	}
 	if summary, err = getStringProperty("summary", properties); err != nil {
 		// Allow summary to be empty.
@@ -139,7 +155,7 @@ func Read(id string, r io.Reader) (*Entry, error) {
 	var entryBytes []byte
 	if entry, ok := properties[entryKey]; ok {
 		if entryBytes, err = yaml.Marshal(entry); err != nil {
-			return nil, fmt.Errorf("could not reencode reading list entry %s: %w", id, err)
+			return Entry{}, fmt.Errorf("could not reencode reading list entry %s: %w", id, err)
 		}
 	}
 
@@ -149,13 +165,13 @@ func Read(id string, r io.Reader) (*Entry, error) {
 		Summary: summary,
 	}
 	if err := yaml.Unmarshal(entryBytes, &e); len(entryBytes) != 0 && err != nil {
-		return nil, fmt.Errorf("error decoding reading list entry %s: %w", id, err)
+		return Entry{}, fmt.Errorf("error decoding reading list entry %s: %w", id, err)
 	}
 	e.Id = id
 	e.Title = title
 	e.original = cfm
 
-	return &e, nil
+	return e, nil
 }
 
 // Marshal the item back to a writer, e.g. a file.
@@ -201,7 +217,7 @@ func makeSource(text, uri string) *Source {
 
 // Constructs an Entry from the given "save" or "share" form.
 func FromForm(form url.Values) (*Entry, error) {
-	log.Printf("parsing form: %+v", form)
+	// log.Printf("parsing form: %+v", form)
 
 	title := form.Get("title")
 	id := form.Get("id")

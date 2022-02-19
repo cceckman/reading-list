@@ -54,7 +54,11 @@ func fakeDirectory(t *testing.T) fs.FS {
 }
 
 func TestManagerRead(t *testing.T) {
-	m := entry.NewManager(fakeDirectory(t))
+	m, err := entry.NewManager(fakeDirectory(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	e, err := m.Read(fakeId)
 	if err != nil {
 		t.Fatal(err)
@@ -67,14 +71,18 @@ func TestManagerRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if diff := cmp.Diff(e, eRef, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
+	if diff := cmp.Diff(e, &eRef, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
 		t.Error("unexpected diffs when read: ", diff)
 	}
 
 }
 
 func TestManagerList(t *testing.T) {
-	m := entry.NewManager(fakeDirectory(t))
+	m, err := entry.NewManager(fakeDirectory(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	es, err := m.List(100)
 	if err != nil {
 		t.Fatal(err)
@@ -88,7 +96,7 @@ func TestManagerList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if diff := cmp.Diff(es[0], eRef, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
+	if diff := cmp.Diff(es[0], &eRef, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
 		t.Error("unexpected diffs when read: ", diff)
 	}
 }
@@ -110,7 +118,11 @@ func TestManagerCreate(t *testing.T) {
 		Added: entry.Date{now},
 	}
 	dir := fakeDirectory(t)
-	m := entry.NewManager(dir)
+	m, err := entry.NewManager(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if err := m.Update(&e); err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +160,10 @@ func TestManagerUpdate(t *testing.T) {
 		Added: entry.Date{now},
 	}
 	dir := fakeDirectory(t)
-	m := entry.NewManager(dir)
+	m, err := entry.NewManager(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := m.Update(&e); err != nil {
 		t.Fatal(err)
 	}

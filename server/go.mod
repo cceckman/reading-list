@@ -8,7 +8,10 @@ require (
 	tailscale.com v1.18.2
 )
 
-require github.com/google/go-cmp v0.5.6
+require (
+	github.com/google/go-cmp v0.5.6
+	github.com/hashicorp/go-multierror v1.1.1
+)
 
 require (
 	github.com/akutz/memconn v0.1.0 // indirect
@@ -19,6 +22,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.0.5 // indirect
 	github.com/google/btree v1.0.1 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210621130208-1cac67f12b1e // indirect
 	github.com/josharian/native v0.0.0-20200817173448-b6b71def0850 // indirect
 	github.com/jsimonetti/rtnetlink v0.0.0-20210525051524-4cc836578190 // indirect
@@ -53,6 +57,7 @@ require (
 	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20211116201604-de7c702ace45 // indirect
 	golang.zx2c4.com/wireguard/windows v0.4.10 // indirect

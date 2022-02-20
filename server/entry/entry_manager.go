@@ -1,6 +1,7 @@
 package entry
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	sfs "github.com/cceckman/reading-list/server/fs"
 	multierror "github.com/hashicorp/go-multierror"
 )
 
@@ -20,7 +22,7 @@ func init() {
 }
 
 // Create a new EntryManager for the given directory.
-func NewManager(dataDir fs.FS) (*EntryManager, error) {
+func NewManager(dataDir sfs.CreateFS) (*EntryManager, error) {
 	m := &EntryManager{
 		dataDir:     dataDir,
 		cacheUpdate: make(chan struct{}, 1),
@@ -36,18 +38,9 @@ func NewManager(dataDir fs.FS) (*EntryManager, error) {
 	return m, nil
 }
 
-// An object like a read-write file.
-type rwfile interface {
-	fs.File
-	io.Reader
-	io.Writer
-	io.Closer
-	io.Seeker
-}
-
 // EntryManager provides CRUD updates to persisted Entrys.
 type EntryManager struct {
-	dataDir fs.FS
+	dataDir sfs.CreateFS
 
 	// Token for full-cache updates; we don't want to run >1 at a time.
 	cacheUpdate chan struct{}
@@ -127,6 +120,7 @@ func (s *EntryManager) refreshCacheItem(id string) error {
 	if err != nil {
 		return fmt.Errorf("could not read entry: %w", err)
 	}
+	defer f.Close()
 	ent, err := Read(id, f)
 	if err != nil {
 		return fmt.Errorf("could not parse entry: %w", err)
@@ -153,8 +147,58 @@ func (s *EntryManager) Read(id string) (*Entry, error) {
 }
 
 // Update (or create) the entry.
-func (s *EntryManager) Update(*Entry) error {
-	return fmt.Errorf("unimplemented")
+func (s *EntryManager) Update(e *Entry) error {
+	// An invalid ID - such as one with '..' - could throw off our path traversal.
+	// Check before doing any creation etc.
+	if err := e.ValidID(); err != nil {
+		return err
+	}
+
+	var f fs.File
+	var err error
+	if f, err = s.dataDir.Create(e.Id + ".md"); errors.Is(err, fs.ErrExist) {
+		// Read the current contents in order to update:
+		f, err = s.getFile(e.Id)
+		if err != nil {
+			return fmt.Errorf("could not read for entry update %q: %w", e.Id, err)
+		}
+		oldEnt, err := Read(e.Id, f)
+		if err != nil {
+			return fmt.Errorf("could not parse for update entry %q: %w", e.Id, err)
+		}
+		e.original = oldEnt.original
+		return err
+	}
+	// Ensure we clean up the file...
+	defer func() {
+		if f == nil {
+			return
+		}
+		if err := f.Close(); err != nil {
+			log.Printf("error closing file for entry %q: %v", e.Id, err)
+		}
+	}()
+
+	// We've loaded the current contents of the file.
+	rwf, ok := f.(sfs.RWFile)
+	if !ok {
+		return fmt.Errorf("file not available for update for entry %q", e.Id)
+	}
+	if _, err := rwf.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("could not seek in file for entry %q: %w", e.Id, err)
+	}
+	if _, err := e.WriteTo(rwf); err != nil {
+		return fmt.Errorf("failed to write file for entry %q: %w", e.Id, err)
+	}
+	// Manually close; flush the writes above.
+	err = f.Close()
+	f = nil // Prevent duplicate close
+	if err != nil {
+		return fmt.Errorf("could not close file for entry update: %w", err)
+	}
+
+	// Refresh the contents from disk before we consider ourselves complete.
+	return s.refreshCacheItem(e.Id)
 }
 
 // List up to `limit` entries.
@@ -186,13 +230,13 @@ func (s *EntryManager) List(limit int) ([]*Entry, error) {
 	return ptrs[0:max], nil
 }
 
-func (s *EntryManager) getFile(id string) (rwfile, error) {
+func (s *EntryManager) getFile(id string) (sfs.RWFile, error) {
 	name := id + ".md"
 	f, err := s.dataDir.Open(name)
 	if err != nil {
 		return nil, fmt.Errorf("could not open file %s: %w", name, err)
 	}
-	rwf, ok := f.(rwfile)
+	rwf, ok := f.(sfs.RWFile)
 	if !ok {
 		return nil, fmt.Errorf("could not treat file as read/write/seek/close (file: %s)", name)
 	}

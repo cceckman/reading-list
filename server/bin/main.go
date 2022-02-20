@@ -11,6 +11,7 @@ import (
 
 	"github.com/cceckman/reading-list/server"
 	"github.com/cceckman/reading-list/server/entry"
+	serverfs "github.com/cceckman/reading-list/server/fs"
 	serverLog "github.com/cceckman/reading-list/server/log"
 	"github.com/cceckman/reading-list/server/paths"
 
@@ -42,7 +43,7 @@ func getEntryManager() server.EntryManager {
 		}
 		return m
 	}
-	m, err := entry.NewManager(os.DirFS(*storageDir))
+	m, err := entry.NewManager(serverfs.NativeFS(*storageDir))
 	if err != nil {
 		log.Fatal(err)
 	}

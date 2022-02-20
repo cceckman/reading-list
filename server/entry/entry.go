@@ -1,9 +1,11 @@
 package entry
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -15,7 +17,12 @@ import (
 )
 
 const entryKey string = "reading-list"
+
+// ISO 8601 date format.
 const DateFormat = "2006-01-02"
+
+// Regex that matches valid IDs: a lowercase letter, followed by lowercase letters, numbers, and hyphens.
+var idMatch = regexp.MustCompile("[a-z][a-z0-9-]+")
 
 // Customize unmarshalling, so we can use short dates.
 type Date struct {
@@ -99,12 +106,22 @@ type Entry struct {
 	original pageparser.ContentFrontMatter `yaml:"-"`
 }
 
+// Check that the ID for the entry is valid.
+func (e *Entry) ValidID() error {
+	if idMatch.Match([]byte(e.Id)) {
+		return nil
+	} else {
+		return fmt.Errorf("invalid ID: %q", e.Id)
+	}
+}
+
 // Discovery / link metadata.
 type Source struct {
 	Text string
 	Uri  string `yaml:"uri,omitempty"`
 }
 
+// If the URI is a URL, return it; otherwise, return an empty string.
 func (s *Source) UrlString() string {
 	if u, err := url.Parse(s.Uri); err == nil {
 		return u.String()
@@ -175,8 +192,57 @@ func Read(id string, r io.Reader) (Entry, error) {
 }
 
 // Marshal the item back to a writer, e.g. a file.
-func (e *Entry) WriteTo(w io.Writer) (int64, error) {
-	return 0, fmt.Errorf("unimplemented")
+func (e *Entry) WriteTo(w io.Writer) (count int64, err error) {
+	// Create a new front-matter dictionary for writing.
+	// This allows us to avoid a circular reference:
+	//   new front matter --> Entry --> old front matter
+	// rather than
+	//   old front matter --> Entry --> old front matter
+	fm := make(map[string]interface{}, len(e.original.FrontMatter))
+	for k, v := range e.original.FrontMatter {
+		fm[k] = v
+	}
+	fm[entryKey] = e
+	// Items that we take from the Hugo info overwrite those keys.
+	fm["title"] = e.Title
+	fm["summary"] = e.Summary
+	if e.Title == "" {
+		return 0, fmt.Errorf("must have title for entry %q", e.Id)
+	}
+
+	// YAML start/end delimiter.
+	const yamlDelim = "---\n"
+	yamlBlock := bytes.NewBuffer(nil)
+	enc := yaml.NewEncoder(yamlBlock)
+	if err := enc.Encode(fm); err != nil {
+		return 0, err
+	}
+
+	var n int
+	var n64 int64
+
+	n, err = io.WriteString(w, yamlDelim)
+	count += int64(n)
+	if err != nil {
+		return
+	}
+
+	n64, err = yamlBlock.WriteTo(w)
+	count += n64
+	if err != nil {
+		return
+	}
+
+	n, err = io.WriteString(w, yamlDelim)
+	count += int64(n)
+	if err != nil {
+		return
+	}
+
+	content := bytes.NewBuffer(e.original.Content)
+	n64, err = content.WriteTo(w)
+	count += n64
+	return
 }
 
 func genId(title string) string {

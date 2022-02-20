@@ -2,13 +2,13 @@ package entry_test
 
 import (
 	"bytes"
-	"io/fs"
 	"os"
 	"path"
 	"testing"
 	"time"
 
 	"github.com/cceckman/reading-list/server/entry"
+	"github.com/cceckman/reading-list/server/fs"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
@@ -41,7 +41,7 @@ to beat a state machine. And these are some good state machines.
 
 const fakeId = "aho-corasick"
 
-func fakeDirectory(t *testing.T) fs.FS {
+func fakeDirectory(t *testing.T) fs.CreateFS {
 	dir, err := os.MkdirTemp(os.TempDir(), "")
 	if err != nil {
 		t.Fatal("failed to make temp directory: ", err)
@@ -49,8 +49,9 @@ func fakeDirectory(t *testing.T) fs.FS {
 	if err := os.WriteFile(path.Join(dir, fakeId+".md"), []byte(fakeEntry), 0755); err != nil {
 		t.Fatal("failed to write temp file: ", err)
 	}
+	t.Logf("temporary directory for test: %s", dir)
 
-	return os.DirFS(dir)
+	return fs.NativeFS(dir)
 }
 
 func TestManagerRead(t *testing.T) {

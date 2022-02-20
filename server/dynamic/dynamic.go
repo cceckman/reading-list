@@ -50,7 +50,7 @@ type Renderer getTemplate
 type getTemplate func(name string) *template.Template
 
 // Formatting function for entry dates.
-func maybeDate(d time.Time) string {
+func maybeDate(d entry.Date) string {
 	if d.IsZero() {
 		return "—"
 	} else {
@@ -59,7 +59,7 @@ func maybeDate(d time.Time) string {
 }
 
 // Alternative formatting function: default to "today"
-func orToday(d time.Time) string {
+func orToday(d entry.Date) string {
 	if d.IsZero() {
 		return time.Now().Format(entry.DateFormat)
 	} else {

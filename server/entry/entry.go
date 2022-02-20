@@ -88,19 +88,19 @@ type Entry struct {
 	Source Source `yaml:"source,omitempty"`
 
 	// Who wrote this work, and where can they be found?
-	Author *Source `yaml:",omitempty"`
+	Author *Source `yaml:"author,omitempty"`
 
 	// When was this item added to the reading list?
-	Added Date `yaml:",omitempty"`
+	Added Date `yaml:"added,omitempty"`
 
 	// When this entry was moved from "in the queue" to "read".
-	Read Date `yaml:",omitempty"`
+	Read Date `yaml:"read,omitempty"`
 	// When commentary on this entry was made available.
-	Reviewed Date `yaml:",omitempty"`
+	Reviewed Date `yaml:"reviewed,omitempty"`
 
 	// Discovery data: how did I come across this item?
 	// This may be rendered as "found via..."
-	Discovery *Source `yaml:",omitempty"`
+	Discovery *Source `yaml:"discovery,omitempty"`
 
 	// Original content as read from storage. This allows the entire entry to be re-serialized.
 	original pageparser.ContentFrontMatter `yaml:"-"`

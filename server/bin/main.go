@@ -83,14 +83,13 @@ func getListener() net.Listener {
 
 func main() {
 	flag.Parse()
-
-	srv := getServer()
-	ln := getListener()
-
 	logSettings, err := serverLog.Settings()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	srv := getServer()
+	ln := getListener()
 
 	log.Fatal(http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if *useTsNet {

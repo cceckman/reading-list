@@ -32,7 +32,9 @@ func NewManager(dataDir sfs.CreateFS) (*EntryManager, error) {
 	// Initialize the token.
 	m.cacheUpdate <- struct{}{}
 	if err := m.refreshCache(); err != nil {
-		return nil, err
+		log.Printf("error in doing initial cache refresh: %v", err)
+		// However: we continue; data errors shouldn't impact startup.
+		// TODO: Better distinction between "data errors" and "real errors"
 	}
 
 	return m, nil
@@ -53,14 +55,18 @@ type EntryManager struct {
 
 // Refreshes the (whole) cache.
 func (s *EntryManager) refreshCache() error {
+	log.Printf("refreshing entry cache from %+v", s.dataDir)
 	select {
 	case <-s.cacheUpdate:
+		log.Printf("refreshing entry cache from %+v", s.dataDir)
 		// Token available; proceed with the update.
 	default:
+		log.Printf("entry cache refresh in progress, waiting...")
 		// Token not availble.
 		// Wait for it to be available, indicating the in-progress update is done;
 		// then return. The other thread has "taken care of" the update we were asked to do.
 		s.cacheUpdate <- (<-s.cacheUpdate)
+		return nil
 	}
 	// We have acquired the token. Return it when we're done.
 	defer func() {
@@ -78,6 +84,7 @@ func (s *EntryManager) refreshCache() error {
 			errs <- err
 			return
 		}
+		log.Printf("found %d entries in filesystem", len(matches))
 
 		for _, id := range matches {
 			ids <- strings.TrimSuffix(id, ".md")
@@ -110,12 +117,15 @@ func (s *EntryManager) refreshCache() error {
 	for err := range errs {
 		result = multierror.Append(result, err)
 	}
+	log.Printf("finished refresh")
 
-	return nil
+	// TODO: This wasn't tested (returning a non-nil error)!
+	return result
 }
 
 // Refresh the cache entry for the given ID.
 func (s *EntryManager) refreshCacheItem(id string) error {
+	log.Printf("updating %q", id)
 	f, err := s.getFile(id)
 	if err != nil {
 		return fmt.Errorf("could not read entry: %w", err)
@@ -129,6 +139,7 @@ func (s *EntryManager) refreshCacheItem(id string) error {
 	s.cacheLock.Lock()
 	defer s.cacheLock.Unlock()
 	s.cache[ent.Id] = &ent
+	log.Printf("updated %q", id)
 	return nil
 }
 
@@ -202,32 +213,35 @@ func (s *EntryManager) Update(e Entry) (*Entry, error) {
 }
 
 // List up to `limit` entries.
-//
-// This implementation serves from the local cache, but
 func (s *EntryManager) List(limit int) ([]*Entry, error) {
-	// When we're done, refresh the cache in a background thread.
-	defer func() {
-		go func() {
-			if err := s.refreshCache(); err != nil {
-				log.Print("error while doing background cache update: ", err)
-			}
+	// TODO: Actually use the cache as a cache; for now, consume synchronously.
+	/*defer func() {
+	go func() {*/
+	if err := s.refreshCache(); err != nil {
+		log.Print("error while doing background cache update: ", err)
+		return nil, err
+	}
+	/*
 		}()
-	}()
+	}()*/
 
 	// But don't delay on file IO right now: serve from cache.
 	s.cacheLock.Lock()
 	ptrs := make([]*Entry, 0, len(s.cache))
+	log.Printf("entries: %+v", s.cache)
 	for _, ent := range s.cache {
 		ptrs = append(ptrs, ent)
 	}
 	FifoSort(ptrs)
 	s.cacheLock.Unlock()
+	log.Printf("entries: %+v", ptrs)
 
 	max := len(ptrs)
 	if limit < max {
 		max = limit
 	}
-	return ptrs[0:max], nil
+	rs := ptrs[0:max]
+	return rs, nil
 }
 
 func (s *EntryManager) getFile(id string) (sfs.RWFile, error) {

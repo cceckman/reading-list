@@ -13,4 +13,6 @@ cd "$(dirname $(realpath $0))"/server
 exec ./reading-list."$ARCH" \
   --allowLocal \
   --logmodule=all \
-  --storageDir=$(pwd)/../testdata/
+  --storage=$(pwd)/../testdata/ \
+  --tsnet reading-list-dev
+

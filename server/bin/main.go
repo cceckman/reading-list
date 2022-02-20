@@ -22,8 +22,8 @@ import (
 var (
 	addr       = flag.String("addr", ":443", "Port or address:port to listen on")
 	allowLocal = flag.Bool("allowLocal", false, "Allow serving from the local static/ directory rather than embedded content. Development only.")
-	storageDir = flag.String("storageDir", "", "Directory to use for entry management. If empty, uses an in-memory entry store.")
-	useTsNet   = flag.Bool("tsnet", true, "Connect directly to Tailscale via tsnet")
+	storageDir = flag.String("storage", "", "Directory to use for entry management. If empty, uses an in-memory entry store.")
+	tsNet      = flag.String("tsnet", "reading-list", "Advertise into a Tailscale network with the given name")
 )
 
 func getEntryManager() server.EntryManager {
@@ -64,9 +64,9 @@ func getServer() *server.Server {
 func getListener() net.Listener {
 	var ln net.Listener
 	var err error
-	if *useTsNet {
+	if *tsNet != "" {
 		s := &tsnet.Server{
-			Hostname: "reading-list",
+			Hostname: *tsNet,
 		}
 		ln, err = s.Listen("tcp", *addr)
 	} else {
@@ -92,7 +92,7 @@ func main() {
 	ln := getListener()
 
 	log.Fatal(http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if *useTsNet {
+		if *tsNet != "" {
 			// Check Tailscale authentication
 			who, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
 			if err != nil {

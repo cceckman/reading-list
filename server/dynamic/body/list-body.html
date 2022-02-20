@@ -1,62 +1,42 @@
-<template id="listItem">
-  <link rel="stylesheet" href="style.css">
-  <div class="listItem">
-    <table class="visibilityInfo">
-      <tr>
-        <td>&#x2757;</td>
-        <td>
-          <slot name="discoveredDate"></slot>
-        </td>
-      </tr>
-      <tr>
-        <td>&#128366;</td>
-        <td>
-          <slot name="readDate"></slot>
-        </td>
-      </tr>
-      <tr>
-        <td>&#128393;</td>
-        <td>
-          <slot name="reviewedDate"></slot>
-        </td>
-      </tr>
-    </table>
-    <div class="itemInfo">
+<table id="listItems">
+  {{ $editPath := .Paths.Edit -}}
+  {{ range .ListItems }}
+  <tr class="startRow">
+    <td>&#x2757;</td>
+    <td>{{ maybeDate .Added }}</td>
+    <td rowspan="3" class="itemInfo">
       <h2>
-        <slot name="title">[Item Title]</slot>
+        {{ if .Source.UrlString -}}
+        <a href="{{ .Source.UrlString }}" target="_blank">{{ .Title }}</a>
+        {{ else -}}
+        {{ .Title -}}
+        {{ end }}
       </h2>
-      <h3>
-        <slot name="source">[Item Source]</slot>
-      </h3>
-      <p><slot name="author">[Item author]</slot></p>
-      <p><slot name="discovery">[Discovery data]</slot></p>
+      <h3><i>from</i> {{ .Source.Text -}}</h3>
+      <p>{{ if .Author }}<i>by</i> {{ template "source.html" .Author }}{{ end }}</p>
+      <p>{{ if .Discovery }}<i>via</i> {{ template "source.html" .Discovery }}{{ end }}</p>
       <!-- TODO: Other metadata? -->
-    </div>
-    <div class="itemEdit">
-      <slot name="editor"></slot>
-    </div>
-  </div>
-</template>
-
-{{ $editPath := .Paths.Edit -}}
-{{ range .ListItems }}
-<list-item>
-  <span slot="discoveredDate">{{ maybeDate .Added }}</span>
-  <span slot="readDate">{{ maybeDate .Read }}</span>
-  <span slot="reviewedDate">{{ maybeDate .Reviewed }}</span>
-  <span slot="title">
-    {{ if .Source.UrlString -}}
-    <a href="{{ .Source.UrlString }}" target="_blank">{{ .Title }}</a>
-    {{ else -}}
-    {{ .Title -}}
-    {{ end }}
-  </span>
-  <span slot="source"><i>from</i> {{ .Source.Text -}}</span>
-  <span slot="author">{{ if .Author }}<i>by</i> {{ template "source.html" .Author }}{{ end }}</span>
-  <span slot="discovery">{{ if .Discovery }}<i>via</i> {{ template "source.html" .Discovery }}{{ end }}</span>
-  <form class="entryEdit" slot="editor" method="get" action="{{ $editPath }}">
-    <input slot="originalId" type="hidden" name="id" value="{{ .Id }}" />
-    <button class="editButton">&#128393;</button>
-  </form>
-</list-item>
-{{ end }}
+    </td>
+    <td rowspan="3">
+      <div class="entryEdit">
+        <form method="get" action="{{ $editPath }}">
+          <input slot="originalId" type="hidden" name="id" value="{{ .Id }}" />
+          <button class="editButton">&#128393;</button>
+        </form>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>&#128366;</td>
+    <td>
+      {{ maybeDate .Read }}
+    </td>
+  </tr>
+  <tr>
+    <td>&#128393;</td>
+    <td>
+      {{ maybeDate .Reviewed }}
+    </td>
+  </tr>
+  {{ end }}
+</table>

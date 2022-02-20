@@ -57,6 +57,8 @@ type Server struct {
 }
 
 func (s *Server) setupRouter() {
+	// TODO: Set up appropriate cache headers for each section.
+	// I keep getting stale stylesheets on mobile...
 	s.mux.Handle(paths.Default.List(), http.HandlerFunc(s.serveList))
 	s.mux.Handle(paths.Default.Edit(), http.HandlerFunc(s.serveEdit))
 	s.mux.Handle(paths.Default.Save(), http.HandlerFunc(s.serveSave))

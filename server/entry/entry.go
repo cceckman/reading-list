@@ -32,15 +32,24 @@ type Date struct {
 // Sorts a list of *Entrys in FIFO order: oldest unread item first.
 func FifoSort(list []*Entry) {
 	sort.Slice(list, func(i, j int) bool {
-		if list[i].Read.IsZero() {
-			// If they're both unread, order by added date.
-			if list[j].Read.IsZero() {
-				return list[j].Added.After(list[i].Added.Time)
+		if list[i].Read.IsZero() && list[j].Read.IsZero() {
+			if list[i].Added == list[j].Added {
+				// Same date: sort by name.
+				return list[i].Id < list[j].Id
 			}
-			// If i is unread, it's less than j.
+			// Later date is lower.
+			return list[j].Added.After(list[i].Added.Time)
+		}
+		if list[i].Read.IsZero() && !list[j].Read.IsZero() {
+			// Unread goes first.
 			return true
 		}
-		// i and j have both been read. Order by read date.
+		// Both are read.
+		if list[i].Read == list[j].Read {
+			// Same date: sort by name.
+			return list[i].Id < list[j].Id
+		}
+		// Later date is lower.
 		return list[j].Read.After(list[i].Read.Time)
 	})
 }
@@ -329,19 +338,19 @@ func FromForm(form url.Values) (Entry, error) {
 
 	var err error
 	// If this is an edit rather than a share:
-	if form.Has("added") {
+	if form.Has("added") && form.Get("added") != "" {
 		e.Added, err = ParseDate(form.Get("added"))
 		if err != nil {
 			return Entry{}, fmt.Errorf("invalid added date: %w", err)
 		}
 	}
-	if form.Has("read") {
+	if form.Has("read") && form.Get("read") != "" {
 		e.Read, err = ParseDate(form.Get("read"))
 		if err != nil {
 			return Entry{}, fmt.Errorf("invalid read date: %w", err)
 		}
 	}
-	if form.Has("reviewed") {
+	if form.Has("reviewed") && form.Get("reviewed") != "" {
 		e.Reviewed, err = ParseDate(form.Get("reviewed"))
 		if err != nil {
 			return Entry{}, fmt.Errorf("invalid reviewed date: %w", err)

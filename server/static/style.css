@@ -50,37 +50,30 @@ button {
 }
 
 #listItems {
-  flex-grow: 1;
-  background-color: lightsteelblue;
-  overflow-y: scroll;
+  padding: 5pt;
   width: 100%;
+  border-collapse: collapse;
 }
 
-.listItem {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-}
-
-.listItem .itemInfo {
-  flex-grow: 1;
-  padding: 2pt;
-}
-
-.itemEdit {
-  flex-grow: 0;
-}
-
-.listItem .visibilityInfo {
+#listItems td {
   text-align: center;
-  margin: 2pt;
-  padding: 2pt;
+  width: min-content;
+  height: 100%;
 }
 
-form.entryEdit {
-  height: 100%;
-  margin: 2pt;
+#listitems tr.startRow td {
+  border-top: 2px solid black;
 }
+
+#listitems td.itemInfo {
+  text-align: left;
+  width: auto;
+}
+
+.entryEdit {
+  height: 100%;
+}
+
 button.editButton {
   height: 100%;
   font-size: larger;

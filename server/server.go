@@ -16,7 +16,7 @@ import (
 // Interface for managing entries.
 type EntryManager interface {
 	Read(id string) (*entry.Entry, error)
-	Update(*entry.Entry) error
+	Update(entry.Entry) (*entry.Entry, error)
 	List(limit int) ([]*entry.Entry, error)
 }
 
@@ -169,12 +169,7 @@ func (s *Server) serveUpdate(w http.ResponseWriter, r *http.Request) (ent *entry
 
 	log.Printf("invoking update handler with entry: %+v", e)
 
-	if err := s.manager.Update(e); err != nil {
-		finerr = fmt.Errorf("error in updating entry: %w", err)
-		return
-	}
-
-	return e, nil
+	return s.manager.Update(e)
 }
 
 func (s *Server) serveDefault(w http.ResponseWriter, r *http.Request) {

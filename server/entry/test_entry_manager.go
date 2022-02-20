@@ -34,10 +34,11 @@ func (em *TestEntryManager) Read(id string) (*Entry, error) {
 	}
 }
 
-func (em *TestEntryManager) Update(e *Entry) error {
+func (em *TestEntryManager) Update(e Entry) (*Entry, error) {
 	if e.Id == "" {
-		return fmt.Errorf("no ID provided")
+		return nil, fmt.Errorf("no ID provided")
 	}
-	em.Items[e.Id] = e
-	return nil
+	eNew := e
+	em.Items[e.Id] = &eNew
+	return &eNew, nil
 }

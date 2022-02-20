@@ -115,6 +115,11 @@ func (e *Entry) ValidID() error {
 	}
 }
 
+// Get the contents of the underlying entry.
+func (e *Entry) Content() string {
+	return string(e.original.Content)
+}
+
 // Discovery / link metadata.
 type Source struct {
 	Text string
@@ -282,7 +287,7 @@ func makeSource(text, uri string) *Source {
 }
 
 // Constructs an Entry from the given "save" or "share" form.
-func FromForm(form url.Values) (*Entry, error) {
+func FromForm(form url.Values) (Entry, error) {
 	// log.Printf("parsing form: %+v", form)
 
 	title := form.Get("title")
@@ -309,7 +314,7 @@ func FromForm(form url.Values) (*Entry, error) {
 		source = u.Host
 	}
 
-	e := &Entry{
+	e := Entry{
 		Id:    id,
 		Title: title,
 		Source: Source{
@@ -327,19 +332,19 @@ func FromForm(form url.Values) (*Entry, error) {
 	if form.Has("added") {
 		e.Added, err = ParseDate(form.Get("added"))
 		if err != nil {
-			return nil, fmt.Errorf("invalid added date: %w", err)
+			return Entry{}, fmt.Errorf("invalid added date: %w", err)
 		}
 	}
 	if form.Has("read") {
 		e.Read, err = ParseDate(form.Get("read"))
 		if err != nil {
-			return nil, fmt.Errorf("invalid read date: %w", err)
+			return Entry{}, fmt.Errorf("invalid read date: %w", err)
 		}
 	}
 	if form.Has("reviewed") {
 		e.Reviewed, err = ParseDate(form.Get("reviewed"))
 		if err != nil {
-			return nil, fmt.Errorf("invalid reviewed date: %w", err)
+			return Entry{}, fmt.Errorf("invalid reviewed date: %w", err)
 		}
 	}
 

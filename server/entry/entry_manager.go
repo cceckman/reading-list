@@ -147,11 +147,11 @@ func (s *EntryManager) Read(id string) (*Entry, error) {
 }
 
 // Update (or create) the entry.
-func (s *EntryManager) Update(e *Entry) error {
+func (s *EntryManager) Update(e Entry) (*Entry, error) {
 	// An invalid ID - such as one with '..' - could throw off our path traversal.
 	// Check before doing any creation etc.
 	if err := e.ValidID(); err != nil {
-		return err
+		return nil, err
 	}
 
 	var f fs.File
@@ -160,14 +160,14 @@ func (s *EntryManager) Update(e *Entry) error {
 		// Read the current contents in order to update:
 		f, err = s.getFile(e.Id)
 		if err != nil {
-			return fmt.Errorf("could not read for entry update %q: %w", e.Id, err)
+			return nil, fmt.Errorf("could not read for entry update %q: %w", e.Id, err)
 		}
 		oldEnt, err := Read(e.Id, f)
 		if err != nil {
-			return fmt.Errorf("could not parse for update entry %q: %w", e.Id, err)
+			return nil, fmt.Errorf("could not parse for update entry %q: %w", e.Id, err)
 		}
 		e.original = oldEnt.original
-		return err
+		return nil, err
 	}
 	// Ensure we clean up the file...
 	defer func() {
@@ -182,23 +182,23 @@ func (s *EntryManager) Update(e *Entry) error {
 	// We've loaded the current contents of the file.
 	rwf, ok := f.(sfs.RWFile)
 	if !ok {
-		return fmt.Errorf("file not available for update for entry %q", e.Id)
+		return nil, fmt.Errorf("file not available for update for entry %q", e.Id)
 	}
 	if _, err := rwf.Seek(0, io.SeekStart); err != nil {
-		return fmt.Errorf("could not seek in file for entry %q: %w", e.Id, err)
+		return nil, fmt.Errorf("could not seek in file for entry %q: %w", e.Id, err)
 	}
 	if _, err := e.WriteTo(rwf); err != nil {
-		return fmt.Errorf("failed to write file for entry %q: %w", e.Id, err)
+		return nil, fmt.Errorf("failed to write file for entry %q: %w", e.Id, err)
 	}
 	// Manually close; flush the writes above.
 	err = f.Close()
 	f = nil // Prevent duplicate close
 	if err != nil {
-		return fmt.Errorf("could not close file for entry update: %w", err)
+		return nil, fmt.Errorf("could not close file for entry update: %w", err)
 	}
 
 	// Refresh the contents from disk before we consider ourselves complete.
-	return s.refreshCacheItem(e.Id)
+	return s.Read(e.Id)
 }
 
 // List up to `limit` entries.

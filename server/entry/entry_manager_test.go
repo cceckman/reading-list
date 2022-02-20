@@ -124,7 +124,7 @@ func TestManagerCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := m.Update(&e); err != nil {
+	if _, err := m.Update(e); err != nil {
 		t.Fatal(err)
 	}
 
@@ -144,42 +144,37 @@ func TestManagerCreate(t *testing.T) {
 }
 
 func TestManagerUpdate(t *testing.T) {
-	t.Error("unimplemented test")
-	const newFakeId = "new-entry"
-	now := time.Now()
-	e := entry.Entry{
-		Id:      newFakeId,
-		Title:   "A new fake entry",
-		Summary: "New fake entry for testing",
-		Source: entry.Source{
-			Text: "entry_manager_test.go",
-		},
-		Author: &entry.Source{
-			Text: "cceckman",
-			Uri:  "https://github.com/cceckman",
-		},
-		Added: entry.Date{now},
-	}
-	dir := fakeDirectory(t)
-	m, err := entry.NewManager(dir)
+	m, err := entry.NewManager(fakeDirectory(t))
 	if err != nil {
-		t.Fatal(err)
-	}
-	if err := m.Update(&e); err != nil {
 		t.Fatal(err)
 	}
 
-	f, err := dir.Open(newFakeId + ".md")
-	if err != nil {
+	var eRef entry.Entry
+	if e, err := m.Read(fakeId); err != nil {
 		t.Fatal(err)
+	} else {
+		eRef = *e
 	}
-	defer f.Close()
-	eRecovered, err := entry.Read(newFakeId, f)
-	if err != nil {
-		t.Fatal(err)
+
+	now := entry.Date{time.Now()}
+	newEntry := eRef
+	newEntry.Title = "Modified title"
+	newEntry.Summary = "Modified summary"
+	newEntry.Read = now
+
+	if _, err := m.Update(newEntry); err != nil {
+		t.Error(err)
 	}
-	if diff := cmp.Diff(eRecovered, e, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
+
+	if e, err := m.Read(fakeId); err != nil {
+		t.Error(err)
+	} else if diff := cmp.Diff(e, &newEntry, cmpopts.IgnoreUnexported(entry.Entry{})); diff != "" {
 		t.Error("unexpected diffs when read: ", diff)
+	} else if diff := cmp.Diff(e.Content(), eRef.Content()); diff != "" {
+		t.Error("unexpected diffs in content: ", diff)
+	} else if got, want := e.Read.Format(entry.DateFormat), now.Format(entry.DateFormat); got != want {
+		t.Errorf("unexpected diffs in returned time: got: %v want: %v", got, want)
+	} else if diff := cmp.Diff(e.Author, eRef.Author); diff != "" {
+		t.Errorf("unexpected diffs in returned author: got: %v want: %v", got, want)
 	}
-
 }

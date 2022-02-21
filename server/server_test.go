@@ -9,8 +9,10 @@ import (
 	"testing"
 
 	"github.com/cceckman/reading-list/server"
+	"github.com/cceckman/reading-list/server/dynamic"
 	"github.com/cceckman/reading-list/server/entry"
 	"github.com/cceckman/reading-list/server/paths"
+	"github.com/cceckman/reading-list/server/static"
 )
 
 func TestList(t *testing.T) {
@@ -28,7 +30,7 @@ func TestList(t *testing.T) {
 
 	p := paths.Default
 
-	m := server.New(p, &em)
+	m := server.New(p, &em, dynamic.New(), static.Files)
 
 	req := httptest.NewRequest("GET", "/", nil)
 
@@ -65,7 +67,7 @@ func TestEditById(t *testing.T) {
 	}
 	p := paths.Default
 
-	m := server.New(p, &em)
+	m := server.New(p, &em, dynamic.New(), static.Files)
 
 	req := httptest.NewRequest("GET", p.Edit(), nil)
 	{
@@ -100,7 +102,7 @@ func TestEditMissingId(t *testing.T) {
 	const id = "id1"
 	p := paths.Default
 
-	m := server.New(p, &em)
+	m := server.New(p, &em, dynamic.New(), static.Files)
 
 	req := httptest.NewRequest("GET", p.Edit(), nil)
 	{
@@ -126,7 +128,7 @@ func TestEditNew(t *testing.T) {
 	}
 	p := paths.Default
 
-	m := server.New(p, &em)
+	m := server.New(p, &em, dynamic.New(), static.Files)
 
 	req := httptest.NewRequest("GET", p.Edit(), nil)
 
@@ -159,7 +161,7 @@ func TestSaveOk(t *testing.T) {
 	form["added"] = []string{"2023-02-06"}
 
 	p := paths.Default
-	m := server.New(p, &em)
+	m := server.New(p, &em, dynamic.New(), static.Files)
 	s := httptest.NewServer(m)
 	client := s.Client()
 

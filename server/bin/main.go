@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -10,20 +11,24 @@ import (
 	"time"
 
 	"github.com/cceckman/reading-list/server"
+	"github.com/cceckman/reading-list/server/dynamic"
 	"github.com/cceckman/reading-list/server/entry"
 	serverfs "github.com/cceckman/reading-list/server/fs"
 	serverLog "github.com/cceckman/reading-list/server/log"
 	"github.com/cceckman/reading-list/server/paths"
+	"github.com/cceckman/reading-list/server/static"
 
 	"tailscale.com/client/tailscale"
 	"tailscale.com/tsnet"
 )
 
 var (
-	addr       = flag.String("addr", ":443", "Port or address:port to listen on")
-	allowLocal = flag.Bool("allowLocal", false, "Allow serving from the local static/ directory rather than embedded content. Development only.")
-	storageDir = flag.String("storage", "", "Directory to use for entry management. If empty, uses an in-memory entry store.")
-	tsNet      = flag.String("tsnet", "reading-list", "Advertise into a Tailscale network with the given name")
+	addr           = flag.String("addr", ":443", "Port or address:port to listen on")
+	localTemplates = flag.String("localTemplates", "", "Serve templates from the local filesystem rather than embedded templates. Development only.")
+	localStatic    = flag.String("localStatic", "", "Serve static content from the local filesystem rather than embedded templates. Development only.")
+	storageDir     = flag.String("storage", "", "Directory to use for entry management. If empty, uses an in-memory entry store.")
+	stateDir       = flag.String("state", "", "Directory to use for state management. If empty, uses the tsnet default.")
+	tsNet          = flag.String("tsnet", "reading-list", "Advertise into a Tailscale network with the given name")
 )
 
 func getEntryManager() server.EntryManager {
@@ -52,13 +57,18 @@ func getEntryManager() server.EntryManager {
 
 func getServer() *server.Server {
 	m := getEntryManager()
-	if *allowLocal {
-		log.Print("Serving from local directories")
-		return server.NewFs(paths.Default, m, os.DirFS("static"), os.DirFS("dynamic"))
-	} else {
-		log.Print("Serving from embedded files")
-		return server.New(paths.Default, m)
+	render := dynamic.New()
+	if *localTemplates != "" {
+		log.Print("Using templates from filesystem")
+		render = dynamic.NewFromFs(os.DirFS(*localTemplates))
 	}
+	var static fs.FS = static.Files
+	if *localStatic != "" {
+		log.Print("Using static content from filesystem")
+		static = os.DirFS(*localStatic)
+	}
+
+	return server.New(paths.Default, m, render, static)
 }
 
 func getListener() net.Listener {
@@ -67,6 +77,7 @@ func getListener() net.Listener {
 	if *tsNet != "" {
 		s := &tsnet.Server{
 			Hostname: *tsNet,
+			Dir:      *stateDir,
 		}
 		ln, err = s.Listen("tcp", *addr)
 	} else {

@@ -6,13 +6,13 @@ case "$(uname -m)" in
   aarch64) ARCH="arm64";;
 esac
 
-redo -j$(nproc) server/reading-list."$ARCH"
+redo -j$(nproc) server/reading-list."$ARCH" server/test
 
 export TAILSCALE_USE_WIP_CODE=true
-cd "$(dirname $(realpath $0))"/server
-exec ./reading-list."$ARCH" \
-  --allowLocal \
-  --logmodule=all \
-  --storage=$(pwd)/../testdata/ \
+exec ./server/reading-list."$ARCH" \
+  --localTemplates server/dynamic \
+  --localStatic server/static \
+  --logmodule all \
+  --storage testdata \
   --tsnet reading-list-dev
 

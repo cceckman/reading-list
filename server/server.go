@@ -10,7 +10,6 @@ import (
 	"github.com/cceckman/reading-list/server/dynamic"
 	"github.com/cceckman/reading-list/server/entry"
 	"github.com/cceckman/reading-list/server/paths"
-	"github.com/cceckman/reading-list/server/static"
 )
 
 // Interface for managing entries.
@@ -21,25 +20,12 @@ type EntryManager interface {
 }
 
 // Return a server for the entry manager, rendering based on embedded templates.
-func New(paths paths.Paths, em EntryManager) *Server {
-	s := &Server{
-		paths:   paths,
-		manager: em,
-		static:  http.FileServer(http.FS(static.Files)),
-		dynamic: dynamic.New(),
-		mux:     http.NewServeMux(),
-	}
-	s.setupRouter()
-	return s
-}
-
-// Return a server for the entry manager, rendering from templates live on the filesystem.
-func NewFs(paths paths.Paths, em EntryManager, static fs.FS, templates fs.FS) *Server {
+func New(paths paths.Paths, em EntryManager, render dynamic.Renderer, static fs.FS) *Server {
 	s := &Server{
 		paths:   paths,
 		manager: em,
 		static:  http.FileServer(http.FS(static)),
-		dynamic: dynamic.NewFromFs(templates),
+		dynamic: render,
 		mux:     http.NewServeMux(),
 	}
 	s.setupRouter()

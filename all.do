@@ -1,2 +1,2 @@
 
-redo-ifchange pkg/all
+redo-ifchange server/test pkg/all

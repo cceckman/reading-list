@@ -54,6 +54,9 @@ type EntryManager struct {
 }
 
 // Refreshes the (whole) cache.
+//
+// TODO: Cache invalidation is hard! :-D
+// This keeps items that have been deleted.
 func (s *EntryManager) refreshCache() error {
 	log.Printf("refreshing entry cache from %+v", s.dataDir)
 	select {
@@ -73,10 +76,14 @@ func (s *EntryManager) refreshCache() error {
 		s.cacheUpdate <- struct{}{}
 	}()
 
+	// Orchestration:
+	// - Errors aggregate in an unbuffered channel
+	// - Filenames become IDs in one thread
+	// - Worker threads multiplex file reads until ids are flushed
 	errs := make(chan error)
 	ids := make(chan string)
-
-	// One thread for the "list" operation.
+	var wg sync.WaitGroup
+	ents := make(chan *Entry, updateConcurrency)
 	go func() {
 		defer close(ids)
 		matches, err := fs.Glob(s.dataDir, "*.md")
@@ -90,71 +97,88 @@ func (s *EntryManager) refreshCache() error {
 			ids <- strings.TrimSuffix(id, ".md")
 		}
 	}()
-
-	// Update cache with several threads.
-	// These will wind up doing file I/O; limit the total number of threads.
-	var wg sync.WaitGroup
+	wg.Add(updateConcurrency)
 	for i := 0; i < updateConcurrency; i++ {
-		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for id := range ids {
-				if err := s.refreshCacheItem(id); err != nil {
+				if ent, err := s.readItem(id); err != nil {
 					errs <- err
+				} else {
+					ents <- ent
 				}
 			}
 		}()
 	}
-	// Close error channel when all update threads are done.
-	// The "list" thread is guaranteed to send to errs before closing ids,
-	// so any errors from that thread are necessarily captured.
 	go func() {
 		wg.Wait()
-		close(errs)
+		close(ents)
 	}()
 
+	newCache := make(map[string]*Entry)
 	var result error
+Loop:
+	for {
+		select {
+		case err := <-errs:
+			result = multierror.Append(result, err)
+		case ent, ok := <-ents:
+			if !ok {
+				break Loop
+			}
+			newCache[ent.Id] = ent
+		}
+	}
+	// All threads that would write to errs are done.
+	close(errs)
+	// Flush any remaining errors.
 	for err := range errs {
 		result = multierror.Append(result, err)
 	}
-	log.Printf("finished refresh")
+	log.Printf("finished refresh with %d items", len(newCache))
+	if result != nil {
+		log.Printf("error in processing refresh: %v", result)
+		return result
+	}
+
+	s.cacheLock.Lock()
+	defer s.cacheLock.Unlock()
+	s.cache = newCache
 
 	// TODO: This wasn't tested (returning a non-nil error)!
 	return result
 }
 
-// Refresh the cache entry for the given ID.
-func (s *EntryManager) refreshCacheItem(id string) error {
+// Read the item with the given ID.
+func (s *EntryManager) readItem(id string) (*Entry, error) {
 	log.Printf("updating %q", id)
 	f, err := s.getFile(id)
 	if err != nil {
-		return fmt.Errorf("could not read entry: %w", err)
+		return nil, fmt.Errorf("could not read entry: %w", err)
 	}
 	defer f.Close()
 	ent, err := Read(id, f)
 	if err != nil {
-		return fmt.Errorf("could not parse entry: %w", err)
+		return nil, fmt.Errorf("could not parse entry: %w", err)
 	}
-
-	s.cacheLock.Lock()
-	defer s.cacheLock.Unlock()
-	s.cache[ent.Id] = &ent
-	log.Printf("updated %q", id)
-	return nil
+	if ent.Id != id {
+		return nil, fmt.Errorf("failed internal consistency check: Id %q != %q", ent.Id, id)
+	}
+	return &ent, nil
 }
 
 // Read the entry with the given contents out from storage.
+// Refreshes the cache entry.
 func (s *EntryManager) Read(id string) (*Entry, error) {
-	if err := s.refreshCacheItem(id); err != nil {
+	var ent *Entry
+	var err error
+	if ent, err = s.readItem(id); err != nil {
 		return nil, fmt.Errorf("could not read state of %q: %w", id, err)
 	}
 	s.cacheLock.Lock()
 	defer s.cacheLock.Unlock()
-	if ent, ok := s.cache[id]; ok {
-		return ent, nil
-	} else {
-		return nil, fmt.Errorf("no entry found with id %q", id)
-	}
+	s.cache[ent.Id] = ent
+	return ent, nil
 }
 
 // Update (or create) the entry.

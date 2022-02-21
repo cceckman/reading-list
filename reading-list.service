@@ -4,7 +4,10 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/reading-list -storage ${STATE_DIRECTORY}
+ExecStart=/usr/bin/reading-list \
+    -storage ${STATE_DIRECTORY}/items \
+    -tsnet reading-list \
+    -state ${STATE_DIRECTORY}/tsnet \
 
 CapabilityBoundingSet=
 NoNewPrivileges=true

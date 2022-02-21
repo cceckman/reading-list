@@ -31,6 +31,8 @@ func Settings() (LogSettings, error) {
 	settings := LogSettings{}
 	for _, mod := range modules {
 		switch mod {
+		case "":
+			// Ignore
 		case "all":
 			settings.RequestPath = true
 			settings.TailscaleIdentity = true
@@ -44,7 +46,7 @@ func Settings() (LogSettings, error) {
 	}
 	var e error
 	if len(unrecognizedModules) != 0 {
-		e = fmt.Errorf("unrecognized log modules: %+v", unrecognizedModules)
+		e = fmt.Errorf("%d unrecognized log modules: %+v", len(unrecognizedModules), unrecognizedModules)
 	}
 	return settings, e
 }

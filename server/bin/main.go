@@ -2,7 +2,9 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"flag"
+	"fmt"
 	"io/fs"
 	"log"
 	"net"
@@ -92,11 +94,36 @@ func getListener() net.Listener {
 	})
 }
 
+// Ensure the directory exists and has restrictive permissions.
+func prepDirectory(name string) error {
+	if info, err := os.Stat(name); errors.Is(err, os.ErrNotExist) {
+		return os.MkdirAll(name, 0700)
+	} else if err != nil {
+		return fmt.Errorf("could not stat directory %q: %w", name, err)
+	} else if !info.IsDir() {
+		return fmt.Errorf("specified path %q is not a directory", name)
+	}
+	// We don't enforce restrictive permissions - just ensure creation sets them up.
+	return nil
+}
+
 func main() {
 	flag.Parse()
 	logSettings, err := serverLog.Settings()
 	if err != nil {
 		log.Fatal(err)
+	}
+	if *stateDir != "" {
+		// If no state directory is specified, allow tslib to create its own.
+		if err := prepDirectory(*stateDir); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if *storageDir != "" {
+		// No storage directory --> use in-memory store.
+		if err := prepDirectory(*storageDir); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	srv := getServer()
